@@ -1,0 +1,21 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    View session
+{% endblock %}
+
+
+
+{% block content %}
+{% if user.is_superuser %}
+    <div>View session</div>  
+
+    {% for session in sessions %}
+    <form method="POST" action="{% url 'delete_session' session.name %}">
+        {% csrf_token %}
+        <input type="hidden" name="session_name" value="{{ session.name }}">
+        <p>{{ session.name }} <input type="submit" value="Usuń {{session.name}}"></p>
+    </form>
+    {% endfor %}
+
+{% endif %}
+{% endblock %}

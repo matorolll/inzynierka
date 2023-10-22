@@ -1,0 +1,37 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    View session
+{% endblock %}
+
+
+
+{% block content %}
+{% if user.is_superuser %}
+<div class="m-3">
+    <div class="card text-center">Sessions</div>
+    {% for session in sessions %}
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-9">
+                        <h5 class="card-title">Name: <a href="{% url 'view_session' session.name %}">{{ session.name }}</a> </h5>
+                        <h5 class="card-title">Password: {{ session.password }}</h5>
+                        <h5 class="card-title">Number of photos in sessions {{ session.photo_set.all.count }}</h5>
+                        <h5 class="card-title">Size of all photos in this session {{session.photos_size_in_session}} MB</h5>
+                        <p class="card-text">
+                            {% for photo in session.photo_set.all %}
+                                {% if forloop.counter <= 9 %}
+                                    <img src="{{ photo.thumbnail.url }}" alt="connect" style="max-height: 100px">
+                                {% elif forloop.counter == 10 %}
+                                    <span>+{{ session.photo_set.all.count|add:"-9" }} ...</span>
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

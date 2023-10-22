@@ -1,0 +1,46 @@
+{% extends "registration/auth_template.html" %}
+{% block title %} Login {% endblock %}
+{% load crispy_forms_tags %}
+
+
+
+
+{% block auth_content %}
+    {% if user.is_authenticated %}
+        You are currently logged, logout? 
+        <a href="/logout"><button class="btn btn-primary btn-block mb-4 mt-5">Logout</button></a>
+
+    {% else %}
+        <form  method="POST" class="form-group">
+            {% csrf_token %}
+            {{ form|crispy }}
+
+            <button type="submit" class="btn btn-primary btn-block mb-4 mt-5">
+            Login
+            </button>
+            
+
+            <div class="text-center">
+                <p>No account? Create one <a href="/sign_up">here</a></p>
+            </div>
+
+            <div class="text-center">
+            <p>or sign up with:</p>
+            <button type="button" class="btn btn-link btn-floating mx-1">
+                <i class="fab fa-facebook-f">media</i>
+            </button>
+
+            <button type="button" class="btn btn-link btn-floating mx-1">
+                <i class="fab fa-google">media</i>
+            </button>
+
+            <button type="button" class="btn btn-link btn-floating mx-1">
+                <i class="fab fa-twitter">media</i>
+            </button>
+
+            </div>
+        </form>
+        <a href="/"><button class="btn btn-success btn-block mb-4">Return</button></a>
+
+    {% endif %}
+{% endblock %}

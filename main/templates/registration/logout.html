@@ -1,0 +1,26 @@
+{% extends "registration/auth_template.html" %}
+{% block title %} Logout {% endblock %}
+{% load crispy_forms_tags %}
+
+
+
+{% block auth_content %}
+    {% if user.is_authenticated %}
+    <div class="button-container">
+        <form method="POST" class="form-group">
+            {% csrf_token %}
+            <div class="text-center">
+                Are you sure you wanna logout?
+            </div>
+            <a href="/logout"><button class="btn btn-primary btn-block mb-4 mt-5">Logout</button></a>
+        </form>
+        <a href="/"><button class="btn btn-success btn-block mb-4 mt-5">Return</button></a>
+    </div>
+    {% else %}
+        <div class="text-center">
+            You are not logged
+        </div>
+        <a href="/login"><button class="btn btn-primary btn-block mb-4 mt-5">Login</button></a>
+        <a href="/"><button class="btn btn-success btn-block mb-4 mt-5">Return</button></a>
+    {% endif %}
+{% endblock %}

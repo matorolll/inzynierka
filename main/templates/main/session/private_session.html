@@ -1,0 +1,386 @@
+{% extends 'main/session/session_template.html' %}
+{% block title %} {{session.name}} {% endblock %}
+
+
+
+
+{% block content %}
+{% if user.is_superuser %}
+
+    {{session.name}}
+
+    Rozmiar zdjęć: {{photos_size_in_session}} MB
+
+    </br>
+    {% for photo in photos %}
+        {% if photo.selected_to_edit %}
+            {{ photo.title }}</br>
+        {% endif %}
+    {% endfor %}
+
+{% endif %}
+ 
+<script defer>
+    lightbox.option({
+      'resizeDuration': 200,
+      'wrapAround': true
+    })
+
+
+
+    const getCSRFToken = () => {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            .split('=')[1];
+        return cookieValue;
+    }
+    
+    
+    const updateCounter = () => {
+        const resultDiv = document.getElementById('selectedCounter');
+        const selectedImages = document.querySelectorAll('.selected');
+        resultDiv.innerHTML = `Selected: ${selectedImages.length}`;
+    
+    }
+    
+    
+    const saveToDb = (images) =>{
+        if (images instanceof NodeList) {
+            const imageArray = Array.from(images);
+            const photoIds = imageArray.map(image => image.getAttribute('alt'));
+            const csrfToken = getCSRFToken();
+            fetch('/update_photo_select_multiple/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ photoIds: photoIds })
+        });
+        }
+
+        else if (images instanceof HTMLImageElement){
+            const photoId = images.getAttribute('alt');
+            const csrfToken = getCSRFToken();
+            fetch(`/update_photo_select/${photoId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+            });
+        }
+
+        
+        updateCounter()
+    }
+
+    
+    const GalleryEffects = () => {
+      const images = document.querySelectorAll('img');
+      const clearButton = document.getElementById('clearButton')
+
+      clearButton.addEventListener('click', () =>{
+        images.forEach((image) => {
+            //image.classList.remove('selected');  border color
+
+            //with checking
+            //const heartIcon = image.nextElementSibling;
+            //if (heartIcon && heartIcon.classList.contains('like-icon')) {
+            //    heartIcon.classList.remove('clicked');
+            //}
+            image.nextElementSibling.classList.remove('clicked');
+        });
+        saveToDb(images);
+      });
+
+      images.forEach((image) => {
+        const heartIcon = image.nextElementSibling;
+        if (heartIcon && heartIcon.classList.contains('like-icon')) {
+            heartIcon.addEventListener('contextmenu', () => {
+                event.preventDefault();
+                heartIcon.classList.toggle('clicked');
+                saveToDb(image)
+        })};
+
+        if (image.getAttribute('data-selected')=== 'True') {
+            heartIcon.classList.toggle('clicked');
+        }
+    
+        image.addEventListener('contextmenu', () => {
+            event.preventDefault();
+            heartIcon.classList.toggle('clicked');
+            saveToDb(image)
+        });
+
+        image.addEventListener('mouseover', () => {
+            image.classList.add('onhover-effect');
+        });
+        
+        image.addEventListener('mouseout', () => {
+            image.classList.remove('onhover-effect');
+        });
+      });
+      updateCounter(); //update onstart
+    }
+    window.addEventListener('load', GalleryEffects);
+</script>
+
+
+<style>
+    .onhover-effect {
+    opacity: 0.8;
+    }
+
+    .selected { border: 5px solid rgb(62, 203, 62);  }
+
+    img{
+        width: 40vmin;
+        height: 56vmin;
+        object-fit:cover;
+        object-position:center;
+    }
+
+    .photo-container {
+    position: relative;
+    display: inline-block;
+    }
+
+    .like-icon {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        color: gray; 
+        cursor: pointer;
+        font-size: 30px;
+    }
+
+    .like-icon.clicked {
+        color: red;
+    }
+</style>
+
+<div id="selectedCounter">Selected: </div>
+<button id="clearButton">Clear images</button>
+</br>
+<a href="{% url 'download_photos_zip' name=session.name %}">Download all photos to zip</a>
+<a href="{% url 'download_photos_folder' name=session.name%}">Download all photos to folder</a>
+
+<section class="gallery min-vh-100">
+    <div class="container-lg">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3">
+            <div class="col">
+
+            {% for photo in photos %}
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.title}}"
+                     data-gallery="photo_gallery" data-photo-id="{{ photo.id }}" class="photo-container"> 
+                     <!--data-alt="{{ photo.id }}"-->
+                    
+                    <img src="{{photo.thumbnail_medium.url}}" class=" shadow-1-strong rounded" loading="lazy"
+                    alt="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"/>
+                    <i class="fas fa-heart like-icon" data-photo-id="{{ photo.id }}"></i>
+
+                </a>
+            {% endfor %}
+        </div>
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+{% endblock %}
+
+
+
+
+
+
+
+<!--
+    {% for photo in photos %}
+        {% if forloop.counter|add:"-1"|divisibleby:6 %}
+        <div class="row">
+            <div class="col-4 mb-4 mb-lg-0">
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />
+                </a>
+        {% elif forloop.counter|add:"-2"|divisibleby:6 %}
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />               
+                </a>
+            </div>
+        {% elif forloop.counter|add:"-3"|divisibleby:6 %}
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />                
+                </a>
+        {% elif forloop.counter|add:"-4"|divisibleby:6 %}
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />                
+                </a>
+            </div>
+        {% elif forloop.counter|add:"-5"|divisibleby:6 %}
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />                
+                </a>
+        {% elif forloop.counter|add:"-6"|divisibleby:6 %}
+                <a href="{{photo.image.url}}" data-lightbox="lightbox" data-title="{{photo.image.url}}" data-gallery="photo_gallery">
+                    <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"
+                     data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"
+                    />                
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+-->
+
+
+
+<!--
+<div class="container-fluid">
+    <div class="d-flex flex-row flex-wrap justify-content-center">
+        {% for photo in photos %}
+        {% if forloop.counter|add:"-1"|divisibleby:8 %}
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"> 
+        {% elif forloop.counter|add:"-2"|divisibleby:8 %}
+            <img src="{{photo.image.url}}" class="img-fluid" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}">
+        </div>
+        {% elif forloop.counter|add:"-3"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+           
+            <img src="{{photo.image.url}}" class="img-fluid" data-photo-id="{{ photo.id }}"  data-selected="{{ photo.selected_to_edit }}">
+        {% elif forloop.counter|add:"-4"|divisibleby:8 %}
+            <img src="{{photo.image.url}}" class="img-fluid scale" data-photo-id="{{ photo.id }}"  data-selected="{{ photo.selected_to_edit }}">
+        </div>
+        {% elif forloop.counter|add:"-5"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid scale mb-2" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}">
+        {% elif forloop.counter|add:"-6"|divisibleby:8 %}
+
+            <img src="{{photo.image.url}}"  class="img-fluid" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}">
+        </div>
+        {% elif forloop.counter|add:"-7"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid m-1 p-1" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}">
+        {% elif forloop.counter|add:"-8"|divisibleby:8 %}
+
+            <img src="{{photo.image.url}}" class="img-fluid image m-1 p-1" data-photo-id="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}">
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    </div>
+</div>
+
+-->
+
+
+
+
+<!--
+<style>
+    .container {
+            background: #f9f9f9;
+        }
+        
+        .flex-column {
+            max-width: 260px;
+        }
+        
+        img {
+            margin: 5px;
+        }
+        
+        .scale {
+            transform: scaleY(1.05);
+            padding-top: 5px; 
+        }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex flex-row flex-wrap justify-content-center">
+        {% for photo in photos %}
+        {% if forloop.counter|add:"-1"|divisibleby:8 %}
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid"> 
+        {% elif forloop.counter|add:"-2"|divisibleby:8 %}
+            <img src="{{photo.image.url}}" class="img-fluid">
+        </div>
+        {% elif forloop.counter|add:"-3"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid">
+        {% elif forloop.counter|add:"-4"|divisibleby:8 %}
+            <img src="{{photo.image.url}}" class="img-fluid scale">
+        </div>
+        {% elif forloop.counter|add:"-5"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid scale mb-2">
+        {% elif forloop.counter|add:"-6"|divisibleby:8 %}
+
+            <img src="{{photo.image.url}}"  class="img-fluid">
+        </div>
+        {% elif forloop.counter|add:"-7"|divisibleby:8 %}
+
+        <div class="d-flex flex-column">
+            <img src="{{photo.image.url}}" class="img-fluid m-1 p-1">
+        {% elif forloop.counter|add:"-8"|divisibleby:8 %}
+
+            <img src="{{photo.image.url}}" class="img-fluid image m-1 p-1">
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    </div>
+</div>
+-->
+
+
+<!--
+    {% for photo in photos %}
+        {% if forloop.counter|add:"-1"|divisibleby:6 %}
+        <div class="row">
+            <div class="col-4 mb-4 mb-lg-0">
+                <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+        {% elif forloop.counter|add:"-2"|divisibleby:6 %}
+                <img  src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+            </div>
+        {% elif forloop.counter|add:"-3"|divisibleby:6 %}
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+        {% elif forloop.counter|add:"-4"|divisibleby:6 %}
+                <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+            </div>
+        {% elif forloop.counter|add:"-5"|divisibleby:6 %}
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+        {% elif forloop.counter|add:"-6"|divisibleby:6 %}
+                <img src="{{photo.image.url}}" class="w-100 shadow-1-strong rounded mb-4"/>
+            </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+-->
+

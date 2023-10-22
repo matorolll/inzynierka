@@ -1,0 +1,53 @@
+{% extends "main/base.html" %}
+{% block title %} auth_template {% endblock %}
+{% block nav %}{% endblock%}
+
+{% block statics %}    
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'auth_template.css' %}">
+{% endblock %}
+
+
+
+{% block content %}
+
+<section class="background-radial-gradient overflow-hidden">
+    <div class="container px-4 py-5 px-md-5 text-center text-lg-start my-5">
+      <div class="row gx-lg-5 align-items-center mb-5"  style="padding-bottom:12rem">
+        <div class="col-lg-6 mb-5 mb-lg-0" style="z-index: 10">
+          <h1 class="my-5 display-5 fw-bold ls-tight" style="color: hsl(218, 81%, 95%)">
+            The best offer for <br />
+            <span style="color: hsl(218, 65%, 87%)">capturing moments</span><br />
+            <span style="color: hsl(218, 75%, 81%)">creating memories</span><br />
+            <span style="color: hsl(218, 81%, 75%)">sharing stories</span><br />
+
+          </h1>
+          <p class="mb-4 opacity-70" style="color: hsl(218, 81%, 85%)">
+            When you work with us, you make it easy to access and manage your photo shoots
+            taken in a professional studio, you can preview the status of your photos,
+            share the content with your family and friends, and select photos for processing
+          </p>
+        </div>
+  
+        <div class="col-lg-6 mb-5 mb-lg-0 position-relative">
+          <div id="radius-shape-1" class="position-absolute rounded-circle shadow-5-strong"></div>
+          <div id="radius-shape-2" class="position-absolute shadow-5-strong"></div>
+  
+          <div class="card bg-glass">
+            <div class="card-body px-4 py-5 px-md-5">
+                {%block auth_content %} {% endblock %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock%}
+
+
+  
+  
+  
+  
+
+

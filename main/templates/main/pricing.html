@@ -1,0 +1,92 @@
+{% extends 'main/base.html' %}
+{% block title %}
+Pricing
+{% endblock %}
+
+{% block statics %}    
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'pricing.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section id="price-section">
+    <div class="container">
+        <div class="row justify-content-center gapsectionsecond">
+            <div class="col-lg-7 text-center">
+                <div class="title-big pb-3 mb-3 main-title bg-light">
+                    <h3>SERVICE PRICES</h3>
+                </div>
+                <p class="description-p text-muted pe-0 pe-lg-0">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Natus quas optio reiciendis deleniti voluptatem facere sequi, quia, est sed dicta aliquid quidem facilis culpa iure perferendis? Dolor ad quia deserunt.
+                </p>
+            </div>
+        </div>
+        <div class="row pt-5">
+            <div class="col-lg-4 pb-5 pb-lg-0">
+                <div class="wrap-price">
+                    <div class="price-innerdetail text-center">
+                        <h5>Family</h5>
+                        <p class="prices">150 zł</p>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Photoshoot duration </span>
+                            <span class="float-right">2 Hours</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Number photo</span>
+                            <span class="float-right">50 - 200</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Editing</span>
+                            <span class="float-right">Inprice</span>
+                        </div>
+                        <a href="#" class="btn btn-secondary mt-5">Schedule</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 pb-5 pb-lg-0">
+                <div class="wrap-price center-wrap">
+                    <div class="price-innerdetail text-center">
+                        <h5>Newborn</h5>
+                        <p class="prices">200 zł</p>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Photoshoot duration </span>
+                            <span class="float-right">3 Hours</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Number photo</span>
+                            <span class="float-right">up to 100</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Editing</span>
+                            <span class="float-right">Inprice</span>
+                        </div>
+                        <a href="#" class="btn btn-secondary mt-5">Schedule</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 pb-5 pb-lg-0">
+                <div class="wrap-price">
+                    <div class="price-innerdetail text-center">
+                        <h5>Wedding</h5>
+                        <p class="prices">1250 zł</p>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Photoshoot duration </span>
+                            <span class="float-right">12 Hours</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Number photo</span>
+                            <span class="float-right">up to 200</span>
+                        </div>
+                        <div class="detail-pricing">
+                            <span class="float-left"> <i class="bi bi-check2-circle"></i> Editing</span>
+                            <span class="float-right">Inprice</span>
+                        </div>
+                        <a href="#" class="btn btn-secondary mt-5">Schedule</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

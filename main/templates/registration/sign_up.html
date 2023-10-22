@@ -1,0 +1,26 @@
+{% extends "registration/auth_template.html" %}
+{% block title %} Singup {% endblock %}
+{% load crispy_forms_tags %}
+
+
+
+
+{% block auth_content %}
+{% if user.is_authenticated %}
+    You are currently signed up, logout to register new account
+    <a href="/logout"><button class="btn btn-primary btn-block mb-4 mt-5">Logout</button></a>
+{% else %}
+    <form method="POST" class="form-group">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary btn-block mb-4 mt-5">Signup</button> 
+    </form>
+    <a href="/"><button class="btn btn-success btn-block mb-4">Return</button></a>
+
+    <div class="text-center">
+        <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+{% endif %}
+
+{% endblock %}
+

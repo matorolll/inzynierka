@@ -1,0 +1,80 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    Control panel
+{% endblock %}
+
+
+
+{% block content %}
+{% if user.is_superuser %}
+<style>
+    .card{
+        margin-top:20px;
+        margin-bottom:20px;
+    }
+</style>
+
+    <div class="row px-5 pt-2 text-center">
+        <div class="col-sm-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Create sessions</h5>
+              <p class="card-text">Create a new session for user</p>
+              <a href="create_session" class="btn btn-primary">Create sessions</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Read sessions</h5>
+              <p class="card-text">View session as user see it</p>
+              <a href="view_sessions" class="btn btn-primary">Read sessions</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Update sessions</h5>
+                <p class="card-text">Update existing session</p>
+                <a href="#" class="btn btn-primary">Update sessions</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Delete sessions</h5>
+                <p class="card-text">Delete existing session</p>
+                <a href="delete_sessions" class="btn btn-primary">Delete sessions</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Manage photos</h5>
+                <p class="card-text">Manage photos overall</p>
+                <a href="photos_sessions" class="btn btn-primary">Manage photos</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-4">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">View user panel</h5>
+                <p class="card-text">Check user activity and others</p>
+                <a href="#" class="btn btn-primary">View user panel</a>
+              </div>
+            </div>
+          </div>
+
+    </div>
+{% endif %}
+{% endblock %}

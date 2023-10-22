@@ -1,0 +1,143 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    Photos session
+{% endblock %}
+
+
+
+{% block content %}
+{% if user.is_superuser %}
+<div class="m-3">
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="card" style="height: 24rem;">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body">
+                    <h5 class="card-title">Add images</h5>
+                    <p class="card-text">
+                        <label for="id_image_type">Image Type:</label><br>
+                        <input type="radio" name="image_type" id="id_image_type_original" value="original" checked>
+                        <label for="id_image_type_original">Original</label><br>
+                        <input type="radio" name="image_type" id="id_image_type_resized" value="resized">
+                        <label for="id_image_type_resized">Resized</label>
+                        <label for="watermark_opacity">, Watermark opacity:</label>
+                        <input type="range" name="watermark_opacity" id="watermark_opacity" min="0" max="100" value="50" step="10">
+
+                    </p>
+                    <p class="card-text">
+                        <label for="id_title">Title:</label>
+                        <input type="text" name="title" id="id_title" value="title">
+                    </p>
+                    <p class="card-text">
+                        <label for="id_image">Image:</label>
+                        <input type="file" name="image" id="id_image" multiple>
+                    </p>
+                    <p class="card-text">
+                        <label for="id_session">Session:</label>
+                        <select name="session" id="id_session">
+                            {% for session in sessions %}
+                                <option value="{{ session.id }}">{{ session.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p class="card-text">
+                        <input type="submit" name="add_images_session" value="Add image">
+                    </p>
+                    <p class="card-text">
+                        {% if img_obj %}  <h3>Succesfully uploaded : {{img_obj.title}}</h3>     {% endif %}
+                    </p>            
+                </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card" style="height: 24rem;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="card-body">
+                    <h5 class="card-title">Clear image from session</h5>
+                    <p class="card-text">
+                        <label for="id_session">Session:</label>
+                        <select name="session" id="id_session">
+                            {% for session in sessions %}
+                                <option value="{{ session.id }}">{{ session.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p class="card-text">
+                        <input type="submit" name="clear_session" value="Delete all images from session">
+                    </p>
+                </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card" style="height: 24rem;">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="card-body">
+                    <h5 class="card-title">Delete entire session</h5>
+                    <p class="card-text">
+                        <label for="id_session">Session:</label>
+                        <select name="session" id="id_session">
+                            {% for session in sessions %}
+                                <option value="{{ session.id }}">{{ session.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                    <p class="card-text">
+                        <input type="submit" name="delete_session" value="Delete session">
+                    </p> 
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="m-3">
+    <div class="card text-center">Sessions</div>
+    {% for session in sessions %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <h5 class="card-title">{{ session.name }}</h5>
+                            <p class="card-text">
+                                {% for photo in session.photo_set.all %}
+                                    {% if forloop.counter <= 9 %}
+                                        <img src="{{ photo.thumbnail.url }}" alt="connect" style="max-height: 100px">
+                                    {% elif forloop.counter == 10 %}
+                                        <span>+{{ session.photo_set.all.count|add:"-9" }} ...</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <a href="/session/{{session.name}}"><button class="btn btn-primary">Preview</button></a>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="session" value="{{ session.id }}">
+                                <button type="submit" name="clear_session" class="btn btn-warning">Clear</button>
+                            </form>
+
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="session" value="{{ session.id }}">
+                                <button type="submit" name="delete_session" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    {% endfor %}
+</div>
+
+
+
+
+
+
+{% endif %}
+{% endblock %}
