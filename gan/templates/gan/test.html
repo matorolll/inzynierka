@@ -1,0 +1,20 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    GAN
+{% endblock %}
+
+
+
+{% block content %}
+    <div>GAN</div>  
+    <form method="post" action="{% url 'ESRGAN_run' %}">
+        {% csrf_token %}
+        <button type="submit">Uruchom skrypt</button>
+    </form>
+    <div>
+        <h2>Zdjęcia z folderu:</h2>
+        {% for image_file in image_files %}
+            <img src="{{ image_file }}" alt="{{ image_file }}">
+        {% endfor %}
+    </div>
+{% endblock %}
