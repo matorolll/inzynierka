@@ -6,15 +6,102 @@
 
 
 {% block content %}
+
     <div>GAN</div>  
-    <form method="post" action="{% url 'ESRGAN_run' %}">
-        {% csrf_token %}
-        <button type="submit">Uruchom skrypt</button>
-    </form>
-    <div>
-        <h2>Zdjęcia z folderu:</h2>
-        {% for image_file in image_files %}
-            <img src="{{ image_file }}" alt="{{ image_file }}">
-        {% endfor %}
+    <div class="m-3">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="card" style="height: 24rem;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Click image from below to add to edit</h5>
+                        <div id="image_to_edit"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-sm-4">
+                <div class="card" style="height: 24rem;">
+                    <form id="myForm" method="post" action="{% url 'ESRGAN_run' %}">
+                        {% csrf_token %}
+                        <button type="button" onclick="checkAndSubmit()">Uruchom skrypt</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-sm-4">
+                <div class="card" style="height: 24rem;">
+                    <div> Wynik</div>
+                    <div id="changed_img"></div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <div class="m-3" id="image_from_base">
+        <h2>Image from base:</h2>
+        {% for session in sessions %}
+        {% for photo in session.photo_set.all %}
+            <img src="{{ photo.thumbnail_medium.url }}" alt="connect" style="max-height: 100px"
+                data-photo-id="{{ photo.id }}" onclick="moveImageToEdit(this)">
+        {% endfor %}
+    {% endfor %}
+    </div>
+    
+    
+
+
+<script>
+function checkAndSubmit() {
+    var imageToEdit = document.getElementById('image_to_edit');
+    if (imageToEdit.children.length > 0) {
+        var selectedImage = imageToEdit.children[0];
+        var photoId = selectedImage.getAttribute('data-photo-id');
+
+        var formData = new FormData(document.getElementById('myForm'));
+        formData.append('photo_id', photoId);
+
+        fetch(document.getElementById('myForm').action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image">';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else {
+        alert('Add image before running the script.');
+    }
+}
+
+
+
+
+    function moveImageToEdit(imgElement) {
+        var imageContainer = document.getElementById('image_from_base');
+        var addImgContainer = document.getElementById('image_to_edit');
+        var changedImgContainer = document.getElementById('changed_img');
+        if (addImgContainer.children.length > 0)  return; 
+
+        imageContainer.removeChild(imgElement);
+        imgElement.style.maxHeight = '300px';
+        imgElement.onclick = function() {
+            changedImgContainer.innerHTML = '';
+            imageContainer.appendChild(imgElement);
+            imgElement.style.maxHeight = '100px';
+            imgElement.onclick = function() {
+                moveImageToEdit(this);
+            };
+        };
+        addImgContainer.appendChild(imgElement);
+    }
+
+
+    document.getElementById('myForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+    });
+</script>
+
 {% endblock %}

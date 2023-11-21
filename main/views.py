@@ -183,6 +183,7 @@ def photos_sessions(request):
                     try:
                         img = Image.open(image)
                         if img.format !='JPEG':
+                            print("not jpg")
                             raise ValidationError("not jpeg")
                         
                         if image_type == 'original':
