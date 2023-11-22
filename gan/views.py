@@ -12,6 +12,8 @@ import numpy as np
 import torch
 from .models import ganPhoto
 from django.core.files import File
+from django.core.files.base import ContentFile
+
 
 def gan_control_panel(request):
     sessions = Session.objects.all()
@@ -21,36 +23,17 @@ def gan_control_panel(request):
     return render(request, 'gan/test.html', context)
 
 
-
-
 def ESRGAN_run(request):
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
         photo = get_object_or_404(Photo, id=photo_id)
+        gan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
 
-        input_image_path = photo.thumbnail_medium.path
-        output_image_path = 'media/gan_photos/{}_rlt.png'.format(photo_id)
-        run_esrgan_on_image(input_image_path, output_image_path)
-
-
-
-        changed_image_name = 'media/programs/ESRGAN/results/{}_rlt.png'.format(photo_id)
-        with open(output_image_path, 'rb') as image_file:
-            gan_photo = ganPhoto(title=changed_image_name, image=File(image_file))
-            gan_photo.save()
-
-        changed_image_url = gan_photo.image.url
-
-
-        return JsonResponse({'changed_image_url': changed_image_url})
+        return JsonResponse({'changed_image_url': gan_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
 
-
-
-
-
-def run_esrgan_on_image(input_image_path, output_image_path):
+def run_esrgan_on_image(input_image):
     model_path = 'gan/programs/ESRGAN/models/RRDB_ESRGAN_x4.pth'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -59,8 +42,7 @@ def run_esrgan_on_image(input_image_path, output_image_path):
     model.eval()
     model = model.to(device)
 
-    # Read input image
-    img = cv2.imread(input_image_path, cv2.IMREAD_COLOR)
+    img = cv2.imread(input_image, cv2.IMREAD_COLOR)
     img = img * 1.0 / 255
     img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
     img_LR = img.unsqueeze(0)
@@ -71,19 +53,12 @@ def run_esrgan_on_image(input_image_path, output_image_path):
 
     output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
     output = (output * 255.0).round()
-    cv2.imwrite(output_image_path, output)
 
+    input_filename, input_file_extension = os.path.splitext(os.path.basename(input_image))
+    title = '{}_esrgan.png'.format(input_filename)
+    image_content = cv2.imencode('.png', output)[1].tobytes()
+    gan_photo = ganPhoto(title=title)
+    gan_photo.image.save(title, ContentFile(image_content), save=True)
 
+    return gan_photo
 
-
-
-#def ESRGAN_run(request):
-#    if request.method == 'POST':
-#        try:
-#            script_path = 'gan/programs/ESRGAN/test.py'
-##            subprocess.run(['pipenv', 'run', 'python', script_path])
-#            return render(request, 'gan/test.html')
-#        except Exception as e:
-#            return render(request, 'main/home.html', {'error_message': str(e)})
-#
-#    return render(request, 'gan/test.html')

@@ -74,6 +74,10 @@ function checkAndSubmit() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image">';
+            var ganImage = document.createElement('img');
+            ganImage.src = data.changed_image_url;
+            ganImage.alt = 'changed image';
+            document.getElementById('gan_image_from_base').appendChild(ganImage);
         })
         .catch(error => {
             console.error('Error:', error);
