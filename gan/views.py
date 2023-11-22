@@ -19,6 +19,8 @@ def gan_control_panel(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
     ganPhotos = ganPhoto.objects.all()
+    #ganPhoto.objects.all().delete()
+
     context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
     return render(request, 'gan/test.html', context)
 
@@ -28,7 +30,6 @@ def ESRGAN_run(request):
         photo_id = request.POST.get('photo_id')
         photo = get_object_or_404(Photo, id=photo_id)
         gan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
-
         return JsonResponse({'changed_image_url': gan_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
