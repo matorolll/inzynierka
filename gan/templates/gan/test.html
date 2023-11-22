@@ -46,6 +46,13 @@
         {% endfor %}
     {% endfor %}
     </div>
+
+    <div class="m-3" id="gan_image_from_base">
+        <h2>GAN Image from base:</h2>
+        {% for ganPhoto in ganPhotos %}
+            <img src="{{ ganPhoto.image.url }}" alt="connect" style="max-height: 100px">
+        {% endfor %}
+    </div>
     
     
 

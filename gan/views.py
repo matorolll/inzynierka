@@ -16,7 +16,8 @@ from django.core.files import File
 def gan_control_panel(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
-    context = {'sessions': sessions, 'photos': photos}
+    ganPhotos = ganPhoto.objects.all()
+    context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
     return render(request, 'gan/test.html', context)
 
 
