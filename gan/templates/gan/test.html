@@ -7,7 +7,13 @@
 
 {% block content %}
 
-    <div>GAN</div>  
+    <div>GAN</div> 
+     
+    <form action="{% url 'delete_all_gan_photos' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Usuń wszystkie obiekty ganPhoto</button>
+      </form>
+
     <div class="m-3">
         <div class="row">
             <div class="col-sm-4">

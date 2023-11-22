@@ -1,6 +1,6 @@
 from django.http import JsonResponse, HttpResponseBadRequest
 import subprocess
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 import os
 import sys
 from main.models import Photo, Session
@@ -23,6 +23,19 @@ def gan_control_panel(request):
 
     context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
     return render(request, 'gan/test.html', context)
+
+
+def delete_all_gan_photos(request):
+    ganPhotos = ganPhoto.objects.all()
+    
+    for gan_photo in ganPhotos:
+        if gan_photo.image:
+            if os.path.isfile(gan_photo.image.path):
+                os.remove(gan_photo.image.path)
+
+    ganPhotos.delete()
+    return redirect('gan_control_panel')
+
 
 
 def ESRGAN_run(request):
