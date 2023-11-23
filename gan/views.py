@@ -37,12 +37,20 @@ def delete_all_gan_photos(request):
     return redirect('gan_control_panel')
 
 
+def check_if_file_over_100kb(file_path):
+    return os.path.getsize(file_path) / 1024 > 100
+
 
 def ESRGAN_run(request):
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
         photo = get_object_or_404(Photo, id=photo_id)
-        gan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
+
+        if check_if_file_over_100kb(photo.image.path):
+              gan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
+        else: gan_photo = run_esrgan_on_image(photo.image.path)
+
+
         return JsonResponse({'changed_image_url': gan_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 

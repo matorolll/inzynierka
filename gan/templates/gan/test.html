@@ -8,12 +8,6 @@
 {% block content %}
 
     <div>GAN</div> 
-     
-    <form action="{% url 'delete_all_gan_photos' %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Usuń wszystkie obiekty ganPhoto</button>
-      </form>
-
     <div class="m-3">
         <div class="row">
             <div class="col-sm-4">
@@ -26,18 +20,24 @@
             </div>
             
             <div class="col-sm-4">
-                <div class="card" style="height: 24rem;">
-                    <form id="myForm" method="post" action="{% url 'ESRGAN_run' %}">
-                        {% csrf_token %}
-                        <button type="button" onclick="checkAndSubmit()">Uruchom skrypt</button>
-                    </form>
+                <div class="card text-center" style="height: 24rem;">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <form id="myForm" method="post" action="{% url 'ESRGAN_run' %}">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                            </form>
+                        </h5>
+                    </div>
                 </div>
             </div>
             
             <div class="col-sm-4">
                 <div class="card" style="height: 24rem;">
-                    <div> Wynik</div>
-                    <div id="changed_img"></div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Result</h5>
+                        <div id="changed_img" style="max-height: 100px"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -47,7 +47,7 @@
         <h2>Image from base:</h2>
         {% for session in sessions %}
         {% for photo in session.photo_set.all %}
-            <img src="{{ photo.thumbnail_medium.url }}" alt="connect" style="max-height: 100px"
+            <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
                 data-photo-id="{{ photo.id }}" onclick="moveImageToEdit(this)">
         {% endfor %}
     {% endfor %}
@@ -60,7 +60,10 @@
         {% endfor %}
     </div>
     
-    
+    <form action="{% url 'delete_all_gan_photos' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Usuń wszystkie obiekty ganPhoto</button>
+      </form>
 
 
 <script>
@@ -79,10 +82,11 @@ function checkAndSubmit() {
         })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image">';
+            document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image" style="max-height: 200px">';
             var ganImage = document.createElement('img');
             ganImage.src = data.changed_image_url;
             ganImage.alt = 'changed image';
+            ganImage.style = 'max-height: 100px';
             document.getElementById('gan_image_from_base').appendChild(ganImage);
         })
         .catch(error => {
@@ -103,7 +107,7 @@ function checkAndSubmit() {
         if (addImgContainer.children.length > 0)  return; 
 
         imageContainer.removeChild(imgElement);
-        imgElement.style.maxHeight = '300px';
+        imgElement.style.maxHeight = '200px';
         imgElement.onclick = function() {
             changedImgContainer.innerHTML = '';
             imageContainer.appendChild(imgElement);
