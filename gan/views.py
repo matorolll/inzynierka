@@ -16,11 +16,9 @@ def esrgan_site_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
     ganPhotos = ganPhoto.objects.all()
-    #ganPhoto.objects.all().delete()
 
     context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
     return render(request, 'gan/control_panel/esrgan.html', context)
-
 
 def delete_all_gan_photos(request):
     ganPhotos = ganPhoto.objects.all()
@@ -85,3 +83,20 @@ def run_esrgan_on_image(input_image):
 
     return gan_photo
 
+
+
+
+def text_to_image_site_view(request):
+    sessions = Session.objects.all()
+    photos = Photo.objects.all()
+    ganPhotos = ganPhoto.objects.all()
+
+    context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
+    return render(request, 'gan/control_panel/text_to_image.html', context)
+
+
+def TEXTTOIMAGE_run(request):
+    if request.method == 'POST':
+        text_input = request.POST.get('text_input')
+        return JsonResponse({'changed_text': text_input})
+    return HttpResponseBadRequest('Invalid request')
