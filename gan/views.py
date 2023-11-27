@@ -98,5 +98,7 @@ def text_to_image_site_view(request):
 def TEXTTOIMAGE_run(request):
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
+
+
         return JsonResponse({'changed_text': text_input})
     return HttpResponseBadRequest('Invalid request')
