@@ -55,14 +55,14 @@
 
     <div class="m-3" id="gan_image_from_base">
         <h2>GAN Image from base:</h2>
-        {% for ganPhoto in ganPhotos %}
-            <img src="{{ ganPhoto.image.url }}" alt="connect" style="max-height: 100px">
+        {% for esrganPhoto in esrganPhotos %}
+            <img src="{{ esrganPhoto.image.url }}" alt="connect" style="max-height: 100px">
         {% endfor %}
     </div>
     
-    <form action="{% url 'delete_all_gan_photos' %}" method="post">
+    <form action="{% url 'delete_all_esrgan_photos' %}" method="post">
         {% csrf_token %}
-        <button type="submit">Usuń wszystkie obiekty ganPhoto</button>
+        <button type="submit">Delete all esrgan photos from database</button>
       </form>
 
 

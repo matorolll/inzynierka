@@ -43,35 +43,40 @@
         </div>
     </div>
 
-    <div class="m-3" id="gan_image_from_base">
-        <h2>GAN Image from base: (change to TextToImage from base)</h2>
-        {% for ganPhoto in ganPhotos %}
-            <img src="{{ ganPhoto.image.url }}" alt="connect" style="max-height: 100px">
+    <div class="m-3" id="texttoimage_image_from_base">
+        <h2>TextToImage from base</h2>
+        {% for ttiPhotos in ttiPhotos %}
+            <img src="{{ ttiPhotos.image.url }}" alt="{{ttiPhotos.prompt}}" style="max-height: 100px">
         {% endfor %}
     </div>
     
-    <form action="{% url 'delete_all_gan_photos' %}" method="post">
+    <form action="{% url 'delete_all_tti_photos' %}" method="post">
         {% csrf_token %}
-        <button type="submit">Usuń wszystkie obiekty ganPhoto</button>
+        <button type="submit">Delete all texttoimage photos</button>
       </form>
 
-<script>
-function checkAndSubmit() {
-    var formData = new FormData(document.getElementById('myForm'));
-
-    fetch(document.getElementById('myForm').action, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('changed_img').innerHTML = '<p>' + data.changed_text + '</p>';
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-</script>
+      <script>
+        function checkAndSubmit() {
+            var formData = new FormData(document.getElementById('myForm'));
+        
+            fetch(document.getElementById('myForm').action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
+                var texttoimage = document.createElement('img');
+                texttoimage.src = data.changed_image_url;
+                texttoimage.alt = 'changed image';
+                texttoimage.style = 'max-height: 100px';
+                document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+        </script>
 
 
 {% endblock %}

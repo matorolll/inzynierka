@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404, redirect
 import os
 from main.models import Photo, Session
-from .models import ganPhoto
+from .models import esrganPhoto, texttoimagePhoto
 from django.core.files.base import ContentFile
 
 
@@ -15,20 +15,20 @@ def gan_control_panel_view(request):
 def esrgan_site_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
-    ganPhotos = ganPhoto.objects.all()
+    esrganPhotos = esrganPhoto.objects.all()
 
-    context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
+    context = {'sessions': sessions, 'photos': photos, 'esrganPhotos' : esrganPhotos}
     return render(request, 'gan/control_panel/esrgan.html', context)
 
-def delete_all_gan_photos(request):
-    ganPhotos = ganPhoto.objects.all()
+def delete_all_esrgan_photos(request):
+    esrganPhotos = esrganPhoto.objects.all()
     
-    for gan_photo in ganPhotos:
-        if gan_photo.image:
-            if os.path.isfile(gan_photo.image.path):
-                os.remove(gan_photo.image.path)
+    for esrgan_photo in esrganPhotos:
+        if esrgan_photo.image:
+            if os.path.isfile(esrgan_photo.image.path):
+                os.remove(esrgan_photo.image.path)
 
-    ganPhotos.delete()
+    esrganPhotos.delete()
     return redirect('esrgan_site_view')
 
 
@@ -42,11 +42,11 @@ def ESRGAN_run(request):
         photo = get_object_or_404(Photo, id=photo_id)
 
         if check_if_file_over_100kb(photo.image.path):
-              gan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
-        else: gan_photo = run_esrgan_on_image(photo.image.path)
+              esrgan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
+        else: esrgan_photo = run_esrgan_on_image(photo.image.path)
 
 
-        return JsonResponse({'changed_image_url': gan_photo.image.url})
+        return JsonResponse({'changed_image_url': esrgan_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
 
@@ -78,10 +78,10 @@ def run_esrgan_on_image(input_image):
     input_filename, input_file_extension = os.path.splitext(os.path.basename(input_image))
     title = '{}_esrgan.png'.format(input_filename)
     image_content = cv2.imencode('.png', output)[1].tobytes()
-    gan_photo = ganPhoto(title=title)
-    gan_photo.image.save(title, ContentFile(image_content), save=True)
+    esrgan_photo = esrganPhoto(title=title)
+    esrgan_photo.image.save(title, ContentFile(image_content), save=True)
 
-    return gan_photo
+    return esrgan_photo
 
 
 
@@ -89,16 +89,49 @@ def run_esrgan_on_image(input_image):
 def text_to_image_site_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
-    ganPhotos = ganPhoto.objects.all()
+    ttiPhotos = texttoimagePhoto.objects.all()
 
-    context = {'sessions': sessions, 'photos': photos, 'ganPhotos' : ganPhotos}
+    context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos}
     return render(request, 'gan/control_panel/text_to_image.html', context)
 
 
 def TEXTTOIMAGE_run(request):
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
+        
+        import torch, cv2
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        import io
+        from diffusers import StableDiffusionPipeline
+        import numpy as np
+
+        model_id = "runwayml/stable-diffusion-v1-5"
+        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
+        pipe = pipe.to('cuda')
+
+        image = np.array(pipe(text_input).images[0])
+
+        _, image_bytes = cv2.imencode('.png', image)
+        title = '{}.png'.format(text_input)
+
+        image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
+
+        new_photo = texttoimagePhoto(prompt=text_input, image=image_file)
+        new_photo.save()
 
 
-        return JsonResponse({'changed_text': text_input})
+        return JsonResponse({'changed_image_url': new_photo.image.url})
+        #return JsonResponse({'changed_text': text_input})
     return HttpResponseBadRequest('Invalid request')
+
+
+def delete_all_tti_photos(request):
+    ttiPhotos = texttoimagePhoto.objects.all()
+    
+    for ttiPhoto in ttiPhotos:
+        if ttiPhoto.image:
+            if os.path.isfile(ttiPhoto.image.path):
+                os.remove(ttiPhoto.image.path)
+
+    ttiPhotos.delete()
+    return redirect('text_to_image_site_view')
