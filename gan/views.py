@@ -149,8 +149,6 @@ def delete_all_tti_photos(request):
 
 
 
-
-
 def image_to_image_site_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
@@ -163,8 +161,11 @@ def image_to_image_site_view(request):
 
 def IMAGETOIMAGE_run(request):
     if request.method == 'POST':
-        #photo_id = request.POST.get('photo_id')
-        #photo = get_object_or_404(Photo, id=photo_id)
+        photo_id = request.POST.get('photo_id')
+        strength = float(request.POST.get('prompt_strength'))
+
+        photo = get_object_or_404(Photo, id=photo_id)
+
         text_input = request.POST.get('text_input')
         
         import torch, cv2
@@ -175,16 +176,15 @@ def IMAGETOIMAGE_run(request):
         import numpy as np
 
         pipe = AutoPipelineForImage2Image.from_pretrained(
-            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
         ).to("cuda")
         pipe.enable_model_cpu_offload()
         pipe.enable_xformers_memory_efficient_attention()
 
-        url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/img2img-init.png"
-        init_image = load_image(url)
+        init_image = load_image(photo.image.path)
 
         #turning to np array
-        image = np.array(pipe(text_input, image=init_image).images[0])
+        image = np.array(pipe(text_input, init_image, strength).images[0])
 
         #fixing colors
         if len(image.shape) == 2:
@@ -202,8 +202,6 @@ def IMAGETOIMAGE_run(request):
 
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
-
-
 
 
 def delete_all_iti_photos(request):

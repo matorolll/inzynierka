@@ -19,6 +19,8 @@
                             <div id="image_to_edit"></div>
                             <h5 class="card-title">Add prompt to edit this photo</h5>
                             <input type="text" name="text_input" required>
+                            <h5 class="card-title">Add prompt strenght</h5>
+                            <input type="text" name="prompt_strength" required>
                         </form>
                     </div>
                 </div>
@@ -76,27 +78,35 @@
 
 
 <script>
-        function checkAndSubmit() {
-            var formData = new FormData(document.getElementById('myForm'));
-        
-            fetch(document.getElementById('myForm').action, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
-                var texttoimage = document.createElement('img');
-                texttoimage.src = data.changed_image_url;
-                texttoimage.alt = 'changed image';
-                texttoimage.style = 'max-height: 100px';
-                document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+function checkAndSubmit() {
+    var imageToEdit = document.getElementById('image_to_edit');
+    if (imageToEdit.children.length > 0) {
+        var selectedImage = imageToEdit.children[0];
+        var photoId = selectedImage.getAttribute('data-photo-id');
 
+        var formData = new FormData(document.getElementById('myForm'));
+        formData.append('photo_id', photoId);
+
+        fetch(document.getElementById('myForm').action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
+            var texttoimage = document.createElement('img');
+            texttoimage.src = data.changed_image_url;
+            texttoimage.alt = 'changed image';
+            texttoimage.style = 'max-height: 100px';
+            document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    } else{
+        alert('Add image before running the script.');
+    }
+}
 
 
 
