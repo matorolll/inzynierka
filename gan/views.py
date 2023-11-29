@@ -190,6 +190,9 @@ def IMAGETOIMAGE_run(request):
 
         #turning to np array
         image = np.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
+        #The guidance_scale parameter is used to control how closely aligned the generated image and text prompt are. 
+        #A higher guidance_scale value means your generated image is more aligned with the prompt,
+        # while a lower guidance_scale value means your generated image has more space to deviate from the prompt.
 
         #fixing colors
         if len(image.shape) == 2:
