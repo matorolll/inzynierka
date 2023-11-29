@@ -106,22 +106,30 @@ def TEXTTOIMAGE_run(request):
         import numpy as np
 
         model_id = "runwayml/stable-diffusion-v1-5"
-        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
+        #model_id = "stabilityai/stable-diffusion-2-1"
+        #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
+        pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+
         pipe = pipe.to('cuda')
 
+        #turning to np array
         image = np.array(pipe(text_input).images[0])
 
-        _, image_bytes = cv2.imencode('.png', image)
+        #fixing colors
+        if len(image.shape) == 2:
+            _, image_bytes = cv2.imencode('.png', image)
+        else:
+            _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        
+        #generating title
         title = '{}.png'.format(text_input)
 
+        #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
-
         new_photo = texttoimagePhoto(prompt=text_input, image=image_file)
         new_photo.save()
 
-
         return JsonResponse({'changed_image_url': new_photo.image.url})
-        #return JsonResponse({'changed_text': text_input})
     return HttpResponseBadRequest('Invalid request')
 
 
