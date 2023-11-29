@@ -19,7 +19,7 @@
                             <div id="image_to_edit"></div>
                             <h5 class="card-title">Add prompt to edit this photo</h5>
                             <input type="text" name="text_input" required>
-                            <h5 class="card-title">Add prompt strenght</h5>
+                            <h5 class="card-title">Add prompt strength</h5>
                             <input type="text" name="prompt_strength" required>
                         </form>
                     </div>
@@ -52,22 +52,24 @@
         {% for session in sessions %}
         {% for photo in session.photo_set.all %}
             <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
-                data-photo-id="{{ photo.id }}" onclick="moveImageToEdit(this)">
+                data-photo-id="{{ photo.id }}" data-photo-model="Photo" onclick="moveImageToEdit(this, 'image_from_base', 'image_to_edit')">
         {% endfor %}
     {% endfor %}
     </div>
 
-    <div class="m-3" id="gan_image_from_base">
+    <div class="m-3" id="tti_image_from_base">
         <h2>TextToImage Image from base:</h2>
         {% for ttiPhoto in ttiPhotos %}
-            <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px">
+            <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px"
+            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
     
-    <div class="m-3" id="gann_image_from_base">
+    <div class="m-3" id="iti_image_from_base">
         <h2>ImageToImage Image from base:</h2>
         {% for itiPhoto in itiPhotos %}
-            <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px">
+            <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px"
+            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
 
@@ -83,9 +85,13 @@ function checkAndSubmit() {
     if (imageToEdit.children.length > 0) {
         var selectedImage = imageToEdit.children[0];
         var photoId = selectedImage.getAttribute('data-photo-id');
+        var photoModel = selectedImage.getAttribute('data-photo-model');
 
+        
         var formData = new FormData(document.getElementById('myForm'));
         formData.append('photo_id', photoId);
+        formData.append('photo_model', photoModel);
+
 
         fetch(document.getElementById('myForm').action, {
             method: 'POST',
@@ -94,11 +100,11 @@ function checkAndSubmit() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
-            var texttoimage = document.createElement('img');
-            texttoimage.src = data.changed_image_url;
-            texttoimage.alt = 'changed image';
-            texttoimage.style = 'max-height: 100px';
-            document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
+            var imagetoimage = document.createElement('img');
+            imagetoimage.src = data.changed_image_url;
+            imagetoimage.alt = 'changed image';
+            imagetoimage.style = 'max-height: 100px';
+            document.getElementById('iti_image_from_base').appendChild(imagetoimage);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -110,24 +116,27 @@ function checkAndSubmit() {
 
 
 
-    function moveImageToEdit(imgElement) {
-        var imageContainer = document.getElementById('image_from_base');
-        var addImgContainer = document.getElementById('image_to_edit');
-        var changedImgContainer = document.getElementById('changed_img');
-        if (addImgContainer.children.length > 0)  return; 
+function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
+    var sourceContainer = document.getElementById(sourceContainerId);
+    var targetContainer = document.getElementById(targetContainerId);
+    var changedImgContainer = document.getElementById('changed_img');
 
-        imageContainer.removeChild(imgElement);
-        imgElement.style.maxHeight = '200px';
+    if (targetContainer.children.length > 0) return;
+
+    sourceContainer.removeChild(imgElement);
+    imgElement.style.maxHeight = '200px';
+
+    imgElement.onclick = function() {
+        changedImgContainer.innerHTML = '';
+        sourceContainer.appendChild(imgElement);
+        imgElement.style.maxHeight = '100px';
         imgElement.onclick = function() {
-            changedImgContainer.innerHTML = '';
-            imageContainer.appendChild(imgElement);
-            imgElement.style.maxHeight = '100px';
-            imgElement.onclick = function() {
-                moveImageToEdit(this);
-            };
+            moveImageToEdit(this, sourceContainerId, targetContainerId);
         };
-        addImgContainer.appendChild(imgElement);
-    }
+    };
+
+    targetContainer.appendChild(imgElement);
+}
 
 
     document.getElementById('myForm').addEventListener('submit', function (event) {

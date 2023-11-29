@@ -162,10 +162,15 @@ def image_to_image_site_view(request):
 def IMAGETOIMAGE_run(request):
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
+        photo_model = request.POST.get('photo_model')
+
+        if photo_model == 'Photo': photo = get_object_or_404(Photo, id=photo_id)
+        elif photo_model == 'texttoimagePhoto': photo = get_object_or_404(texttoimagePhoto, id=photo_id)
+        elif photo_model == 'imagetoimagePhoto': photo = get_object_or_404(imagetoimagePhoto, id=photo_id)
+        else: print("error")
+
+
         strength = float(request.POST.get('prompt_strength'))
-
-        photo = get_object_or_404(Photo, id=photo_id)
-
         text_input = request.POST.get('text_input')
         
         import torch, cv2
@@ -184,7 +189,7 @@ def IMAGETOIMAGE_run(request):
         init_image = load_image(photo.image.path)
 
         #turning to np array
-        image = np.array(pipe(text_input, init_image, strength).images[0])
+        image = np.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
 
         #fixing colors
         if len(image.shape) == 2:
