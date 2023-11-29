@@ -1,0 +1,128 @@
+{% extends 'main/base.html' %}
+{% block title %}
+    ESRGAN
+{% endblock %}
+
+
+
+{% block content %}
+
+    <div>ESRGAN</div> 
+    <div class="m-3">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="card" style="height: 24rem;">
+                    <div class="card-body text-center">
+                        <form id="myForm" method="post" action="{% url 'IMAGETOIMAGE_run' %}">
+                            {% csrf_token %}
+                            <h5 class="card-title">Click image from below to add to edit</h5>
+                            <div id="image_to_edit"></div>
+                            <h5 class="card-title">Add prompt to edit this photo</h5>
+                            <input type="text" name="text_input" required>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-sm-4">
+                <div class="card text-center" style="height: 24rem;">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                        </h5>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-sm-4">
+                <div class="card" style="height: 24rem;">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Result</h5>
+                        <div id="changed_img" style="max-height: 100px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="m-3" id="image_from_base">
+        <h2>Image from base:</h2>
+        {% for session in sessions %}
+        {% for photo in session.photo_set.all %}
+            <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
+                data-photo-id="{{ photo.id }}" onclick="moveImageToEdit(this)">
+        {% endfor %}
+    {% endfor %}
+    </div>
+
+    <div class="m-3" id="gan_image_from_base">
+        <h2>TextToImage Image from base:</h2>
+        {% for ttiPhoto in ttiPhotos %}
+            <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px">
+        {% endfor %}
+    </div>
+    
+    <div class="m-3" id="gann_image_from_base">
+        <h2>ImageToImage Image from base:</h2>
+        {% for itiPhoto in itiPhotos %}
+            <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px">
+        {% endfor %}
+    </div>
+
+    <form action="{% url 'delete_all_iti_photos' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Delete all image to image photos from database</button>
+      </form>
+
+
+<script>
+        function checkAndSubmit() {
+            var formData = new FormData(document.getElementById('myForm'));
+        
+            fetch(document.getElementById('myForm').action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
+                var texttoimage = document.createElement('img');
+                texttoimage.src = data.changed_image_url;
+                texttoimage.alt = 'changed image';
+                texttoimage.style = 'max-height: 100px';
+                document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+
+
+
+    function moveImageToEdit(imgElement) {
+        var imageContainer = document.getElementById('image_from_base');
+        var addImgContainer = document.getElementById('image_to_edit');
+        var changedImgContainer = document.getElementById('changed_img');
+        if (addImgContainer.children.length > 0)  return; 
+
+        imageContainer.removeChild(imgElement);
+        imgElement.style.maxHeight = '200px';
+        imgElement.onclick = function() {
+            changedImgContainer.innerHTML = '';
+            imageContainer.appendChild(imgElement);
+            imgElement.style.maxHeight = '100px';
+            imgElement.onclick = function() {
+                moveImageToEdit(this);
+            };
+        };
+        addImgContainer.appendChild(imgElement);
+    }
+
+
+    document.getElementById('myForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+    });
+</script>
+
+{% endblock %}

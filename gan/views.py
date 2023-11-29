@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404, redirect
 import os
 from main.models import Photo, Session
-from .models import esrganPhoto, texttoimagePhoto
+from .models import esrganPhoto, texttoimagePhoto, imagetoimagePhoto
 from django.core.files.base import ContentFile
 
 
@@ -145,3 +145,74 @@ def delete_all_tti_photos(request):
 
     ttiPhotos.delete()
     return redirect('text_to_image_site_view')
+
+
+
+
+
+
+def image_to_image_site_view(request):
+    sessions = Session.objects.all()
+    photos = Photo.objects.all()
+    ttiPhotos = texttoimagePhoto.objects.all()
+    itiPhotos = imagetoimagePhoto.objects.all()
+
+    context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos, 'itiPhotos' : itiPhotos }
+    return render(request, 'gan/control_panel/image_to_image.html', context)
+
+
+def IMAGETOIMAGE_run(request):
+    if request.method == 'POST':
+        #photo_id = request.POST.get('photo_id')
+        #photo = get_object_or_404(Photo, id=photo_id)
+        text_input = request.POST.get('text_input')
+        
+        import torch, cv2
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        import io
+        from diffusers import AutoPipelineForImage2Image
+        from diffusers.utils import make_image_grid, load_image
+        import numpy as np
+
+        pipe = AutoPipelineForImage2Image.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=True
+        ).to("cuda")
+        pipe.enable_model_cpu_offload()
+        pipe.enable_xformers_memory_efficient_attention()
+
+        url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/img2img-init.png"
+        init_image = load_image(url)
+
+        #turning to np array
+        image = np.array(pipe(text_input, image=init_image).images[0])
+
+        #fixing colors
+        if len(image.shape) == 2:
+            _, image_bytes = cv2.imencode('.png', image)
+        else:
+            _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        
+        #generating title
+        title = '{}.png'.format(text_input)
+
+        #saving
+        image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
+        new_photo = imagetoimagePhoto(prompt=text_input, image=image_file)
+        new_photo.save()
+
+        return JsonResponse({'changed_image_url': new_photo.image.url})
+    return HttpResponseBadRequest('Invalid request')
+
+
+
+
+def delete_all_iti_photos(request):
+    itiPhotos = imagetoimagePhoto.objects.all()
+    
+    for itiPhoto in itiPhotos:
+        if itiPhoto.image:
+            if os.path.isfile(itiPhoto.image.path):
+                os.remove(itiPhoto.image.path)
+
+    itiPhotos.delete()
+    return redirect('image_to_image_site_view')

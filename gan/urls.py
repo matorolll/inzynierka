@@ -11,5 +11,8 @@ urlpatterns = [
     path("TEXTTOIMAGE_run/", views.TEXTTOIMAGE_run, name="TEXTTOIMAGE_run"),
     path('delete_all_tti_photos/', views.delete_all_tti_photos, name='delete_all_tti_photos'),
 
+    path("gan_control_panel/image_to_image/", views.image_to_image_site_view, name="image_to_image_site_view"),
+    path("IMAGETOIMAGE_run/", views.IMAGETOIMAGE_run, name="IMAGETOIMAGE_run"),
+    path('delete_all_iti_photos/', views.delete_all_iti_photos, name='delete_all_iti_photos'),
 
 ]
