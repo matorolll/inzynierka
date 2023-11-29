@@ -109,6 +109,8 @@ def TEXTTOIMAGE_run(request):
         #model_id = "stabilityai/stable-diffusion-2-1"
         #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
         pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+        #can comment xformers
+        pipe.enable_xformers_memory_efficient_attention()
 
         pipe = pipe.to('cuda')
 
