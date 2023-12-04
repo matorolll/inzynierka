@@ -13,7 +13,7 @@
             <div class="col-sm-4">
                 <div class="card" style="height: 24rem;">
                     <div class="card-body text-center">
-                        <form id="myForm" method="post" action="{% url 'TEXTTOIMAGE_run' %}">
+                        <form id="myForm" method="post" action="{% url 'tti_run' %}">
                             {% csrf_token %}
                             <h5 class="card-title">Write prompt</h5>
                             <input type="text" name="text_input" required>

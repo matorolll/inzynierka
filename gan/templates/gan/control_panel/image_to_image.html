@@ -13,7 +13,7 @@
             <div class="col-sm-4">
                 <div class="card" style="height: 24rem;">
                     <div class="card-body text-center">
-                        <form id="myForm" method="post" action="{% url 'IMAGETOIMAGE_run' %}">
+                        <form id="myForm" method="post" action="{% url 'iti_run' %}">
                             {% csrf_token %}
                             <h5 class="card-title">Click image from below to add to edit</h5>
                             <div id="image_to_edit"></div>

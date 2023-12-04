@@ -23,7 +23,7 @@
                 <div class="card text-center" style="height: 24rem;">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <form id="myForm" method="post" action="{% url 'ESRGAN_run' %}">
+                            <form id="myForm" method="post" action="{% url 'esrgan_run' %}">
                                 {% csrf_token %}
                                 <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
                             </form>
