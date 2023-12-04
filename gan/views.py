@@ -103,26 +103,30 @@ def tti_view(request):
 def tti_run(request):
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
-        new_photo = tti_script(text_input)
+        seed = request.POST.get('seed_input')
+        guidance_scale = request.POST.get('guidance_scale_input')
+        steps = request.POST.get('steps_input')
+
+
+        new_photo = tti_script(text_input, seed, guidance_scale, steps)
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
-def tti_script(text_input):
+def tti_script(text_input, seed, guidance_scale, steps):
     import torch, cv2
     from diffusers import StableDiffusionPipeline
     import numpy as np
 
+    torch.manual_seed(seed)
     model_id = "runwayml/stable-diffusion-v1-5"
     #model_id = "stabilityai/stable-diffusion-2-1"
     #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to('cuda')
     #can comment xformers
     pipe.enable_xformers_memory_efficient_attention()
 
-    pipe = pipe.to('cuda')
-
     #turning to np array
-    image = np.array(pipe(text_input).images[0])
+    image = np.array(pipe(text_input, guidance_scale=guidance_scale, num_inference_steps = steps).images[0])
 
     #fixing colors
     if len(image.shape) == 2:

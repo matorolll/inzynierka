@@ -77,7 +77,7 @@
     </div>
 
 
-    <form action="{% url 'delete_all_esrgan_photos' %}" method="post">
+    <form action="{% url 'esrgan_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all esrgan photos from database</button>
       </form>

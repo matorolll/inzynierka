@@ -73,7 +73,7 @@
         {% endfor %}
     </div>
 
-    <form action="{% url 'delete_all_iti_photos' %}" method="post">
+    <form action="{% url 'iti_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all image to image photos from database</button>
       </form>
