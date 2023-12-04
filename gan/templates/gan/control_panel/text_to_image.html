@@ -17,16 +17,15 @@
                             {% csrf_token %}
                             <h5 class="card-title">Write prompt</h5>
                             <textarea name="text_input" rows="5" cols="60" required></textarea>
-
+                            </br>
                             <label for="seed_input">Seed Input:</label>
                             <input type="number" name="seed_input" id="seed_input" placeholder="Enter an integer or leave blank for random">
                             <button type="button" onclick="generateRandomSeed()">Generate Random Seed</button>
-
-                        
+                            </br>
                             <label for="guidance_scale_input">Guidance Scale:</label>
                             <input type="range" name="guidance_scale_input" id="guidance_scale_input" min="0.0" max="20.0" step="0.1" value="0.0">
                             <output for="guidance_scale_input">0.0</output>
-                        
+                            </br>
                             <label for="steps_input">Steps Input:</label>
                             <input type="range" name="steps_input" id="steps_input" min="1" max="100" value="1">
                             <output for="steps_input">1</output>
@@ -96,6 +95,28 @@
             var randomSeed = Math.floor(Math.random() * 1000000000) + 1;
             document.getElementById("seed_input").value = randomSeed;
         }
+
+    var guidanceSlider = document.getElementById("guidance_scale_input");
+    var guidanceOutput = document.querySelector("output[for=guidance_scale_input]");
+
+    var stepsSlider = document.getElementById("steps_input");
+    var stepsOutput = document.querySelector("output[for=steps_input]");
+
+    guidanceSlider.addEventListener("input", function() {
+        guidanceOutput.textContent = guidanceSlider.value;
+    });
+
+    guidanceSlider.addEventListener("change", function() {
+        guidanceOutput.textContent = guidanceSlider.value;
+    });
+
+    stepsSlider.addEventListener("input", function() {
+        stepsOutput.textContent = stepsSlider.value;
+    });
+
+    stepsSlider.addEventListener("change", function() {
+        stepsOutput.textContent = stepsSlider.value;
+    });
         </script>
 
 

@@ -103,9 +103,9 @@ def tti_view(request):
 def tti_run(request):
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
-        seed = request.POST.get('seed_input')
-        guidance_scale = request.POST.get('guidance_scale_input')
-        steps = request.POST.get('steps_input')
+        seed = int(request.POST.get('seed_input'))
+        guidance_scale = float(request.POST.get('guidance_scale_input'))
+        steps = int(request.POST.get('steps_input'))
 
 
         new_photo = tti_script(text_input, seed, guidance_scale, steps)
@@ -114,12 +114,12 @@ def tti_run(request):
 
 def tti_script(text_input, seed, guidance_scale, steps):
     import torch, cv2
-    from diffusers import StableDiffusionPipeline
+    from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
     import numpy as np
 
     torch.manual_seed(seed)
-    model_id = "runwayml/stable-diffusion-v1-5"
-    #model_id = "stabilityai/stable-diffusion-2-1"
+    #model_id = "runwayml/stable-diffusion-v1-5"
+    model_id = "stabilityai/stable-diffusion-2-1"
     #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
     pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to('cuda')
     #can comment xformers
