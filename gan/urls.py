@@ -15,4 +15,7 @@ urlpatterns = [
     path("iti_run/", views.iti_run, name="iti_run"),
     path('iti_delete_all_photos/', views.iti_delete_all_photos, name='iti_delete_all_photos'),
 
+    path("gan_control_panel/inpaint/", views.inpaint_view, name="inpaint_view"),
+    path("inpaint_run/", views.inpaint_run, name="inpaint_run"),
+    path('inpaint_delete_all_photos/', views.inpaint_delete_all_photos, name='inpaint_delete_all_photos'),
 ]

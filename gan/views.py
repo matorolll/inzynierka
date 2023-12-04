@@ -234,6 +234,48 @@ def iti_delete_all_photos(request):
     return redirect('iti_view')
 
 
+#image to image
+def inpaint_view(request):
+    sessions = Session.objects.all()
+    photos = Photo.objects.all()
+    ttiPhotos = texttoimagePhoto.objects.all()
+    itiPhotos = imagetoimagePhoto.objects.all()
+
+    context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos, 'itiPhotos' : itiPhotos }
+    return render(request, 'gan/control_panel/inpaint.html', context)
+
+def inpaint_run(request):
+    if request.method == 'POST':
+        photo_id = request.POST.get('photo_id')
+        photo_model = request.POST.get('photo_model')
+        photo = check_image_model(photo_model, photo_id)
+
+        strength = float(request.POST.get('prompt_strength'))
+        text_input = request.POST.get('text_input')
+
+        new_photo = []
+        
+        return JsonResponse({'changed_image_url': new_photo.image.url})
+    return HttpResponseBadRequest('Invalid request')
+
+
+def inpaint_delete_all_photos(request):
+    itiPhotos = imagetoimagePhoto.objects.all()
+    
+    for itiPhoto in itiPhotos:
+        if itiPhoto.image:
+            if os.path.isfile(itiPhoto.image.path):
+                os.remove(itiPhoto.image.path)
+
+    itiPhotos.delete()
+    return redirect('iti_view')
+
+
+
+
+
+
+
 
 #assistance function
 def check_image_model(photo_model, photo_id):
