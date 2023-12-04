@@ -16,8 +16,15 @@ def esrgan_site_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
     esrganPhotos = esrganPhoto.objects.all()
+    ttiPhotos = texttoimagePhoto.objects.all()
+    itiPhotos = imagetoimagePhoto.objects.all()
 
-    context = {'sessions': sessions, 'photos': photos, 'esrganPhotos' : esrganPhotos}
+    context = {'sessions': sessions,
+               'photos': photos,
+               'esrganPhotos' : esrganPhotos,
+               'ttiPhotos' : ttiPhotos,
+               'itiPhotos' : itiPhotos,
+              }
     return render(request, 'gan/control_panel/esrgan.html', context)
 
 def delete_all_esrgan_photos(request):
@@ -39,11 +46,21 @@ def check_if_file_over_100kb(file_path):
 def ESRGAN_run(request):
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
-        photo = get_object_or_404(Photo, id=photo_id)
+        photo_model = request.POST.get('photo_model')
 
-        if check_if_file_over_100kb(photo.image.path):
-              esrgan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
-        else: esrgan_photo = run_esrgan_on_image(photo.image.path)
+        if photo_model == 'Photo':
+            photo = get_object_or_404(Photo, id=photo_id)
+            if check_if_file_over_100kb(photo.image.path):
+                esrgan_photo = run_esrgan_on_image(photo.thumbnail_medium.path)
+            else: esrgan_photo = run_esrgan_on_image(photo.image.path)
+        elif photo_model == 'texttoimagePhoto':
+            photo = get_object_or_404(texttoimagePhoto, id=photo_id)
+            esrgan_photo = run_esrgan_on_image(photo.image.path)
+        elif photo_model == 'imagetoimagePhoto':
+            photo = get_object_or_404(imagetoimagePhoto, id=photo_id)
+            esrgan_photo = run_esrgan_on_image(photo.image.path)
+        else: print("error")
+
 
 
         return JsonResponse({'changed_image_url': esrgan_photo.image.url})
@@ -159,16 +176,19 @@ def image_to_image_site_view(request):
     return render(request, 'gan/control_panel/image_to_image.html', context)
 
 
+
+def check_image_model(photo_model, photo_id):
+    if photo_model == 'Photo': photo = get_object_or_404(Photo, id=photo_id)
+    elif photo_model == 'texttoimagePhoto': photo = get_object_or_404(texttoimagePhoto, id=photo_id)
+    elif photo_model == 'imagetoimagePhoto': photo = get_object_or_404(imagetoimagePhoto, id=photo_id)
+    return photo
+
+
 def IMAGETOIMAGE_run(request):
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
         photo_model = request.POST.get('photo_model')
-
-        if photo_model == 'Photo': photo = get_object_or_404(Photo, id=photo_id)
-        elif photo_model == 'texttoimagePhoto': photo = get_object_or_404(texttoimagePhoto, id=photo_id)
-        elif photo_model == 'imagetoimagePhoto': photo = get_object_or_404(imagetoimagePhoto, id=photo_id)
-        else: print("error")
-
+        photo = check_image_model(photo_model, photo_id)
 
         strength = float(request.POST.get('prompt_strength'))
         text_input = request.POST.get('text_input')

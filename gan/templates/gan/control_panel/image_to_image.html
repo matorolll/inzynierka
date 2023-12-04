@@ -85,10 +85,10 @@ function checkAndSubmit() {
     if (imageToEdit.children.length > 0) {
         var selectedImage = imageToEdit.children[0];
         var photoId = selectedImage.getAttribute('data-photo-id');
+
+        var formData = new FormData(document.getElementById('myForm'));
         var photoModel = selectedImage.getAttribute('data-photo-model');
 
-        
-        var formData = new FormData(document.getElementById('myForm'));
         formData.append('photo_id', photoId);
         formData.append('photo_model', photoModel);
 
