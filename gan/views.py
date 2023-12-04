@@ -5,12 +5,13 @@ from main.models import Photo, Session
 from .models import esrganPhoto, texttoimagePhoto, imagetoimagePhoto
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
+import numpy
 
 #views build
 #modules_name : 
 #   _view - views of modules site
 #   _run  - checking post, running script ,returning json
-#   _script  - load heavy modules, executing heavy script, returning image
+#   _script  - load heavy modules, executing heavy script, returning and saving image
 #   _delete_all_photos  - delete all photos from models and databse
 
 def gan_control_panel_view(request):
@@ -48,7 +49,7 @@ def esrgan_run(request):
 
 def esrgan_script(input_image):
     #modules in function will lag single image, drop to start to transfer lag to overall entire app
-    import glob, cv2, torch, numpy
+    import glob, cv2, torch
     from gan.programs.ESRGAN.RRDBNet_arch import RRDBNet #it might lag 
 
     model_path = 'gan/programs/ESRGAN/models/RRDB_ESRGAN_x4.pth'
@@ -106,27 +107,34 @@ def tti_run(request):
         seed = int(request.POST.get('seed_input'))
         guidance_scale = float(request.POST.get('guidance_scale_input'))
         steps = int(request.POST.get('steps_input'))
+        model = request.POST.get('model_input')
 
-
-        new_photo = tti_script(text_input, seed, guidance_scale, steps)
+        new_photo = tti_script(text_input, seed, guidance_scale, steps, model)
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
-def tti_script(text_input, seed, guidance_scale, steps):
+def tti_script(text_input, seed, guidance_scale, steps, model):
     import torch, cv2
-    from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
-    import numpy as np
+    from diffusers.utils import make_image_grid
 
     torch.manual_seed(seed)
-    #model_id = "runwayml/stable-diffusion-v1-5"
-    model_id = "stabilityai/stable-diffusion-2-1"
-    #pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16, revision="fp16")
-    pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to('cuda')
+    if model == "stabilityai/stable-diffusion-xl-base-1.0":
+        from diffusers import StableDiffusionXLPipeline
+        pipe = StableDiffusionXLPipeline.from_pretrained(model, torch_dtype=torch.float16)
+    elif model == "kandinsky-community/kandinsky-2-2-decoder":
+        from diffusers import AutoPipelineForText2Image
+        pipe = AutoPipelineForText2Image.from_pretrained(model, torch_dtype=torch.float16)
+    else: 
+        from diffusers import StableDiffusionPipeline
+        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
+    
+    pipe.to('cuda')
+
     #can comment xformers
     pipe.enable_xformers_memory_efficient_attention()
 
     #turning to np array
-    image = np.array(pipe(text_input, guidance_scale=guidance_scale, num_inference_steps = steps).images[0])
+    image = numpy.array(pipe(text_input, guidance_scale=guidance_scale, num_inference_steps = steps).images[0])
 
     #fixing colors
     if len(image.shape) == 2:
@@ -183,7 +191,6 @@ def iti_script(photo, strength, text_input):
         import torch, cv2
         from diffusers import AutoPipelineForImage2Image
         from diffusers.utils import make_image_grid, load_image
-        import numpy as np
 
         pipe = AutoPipelineForImage2Image.from_pretrained(
             "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
@@ -194,10 +201,10 @@ def iti_script(photo, strength, text_input):
         init_image = load_image(photo.image.path)
 
         #turning to np array
-        image = np.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
+        image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
         #The guidance_scale parameter is used to control how closely aligned the generated image and text prompt are. 
         #A higher guidance_scale value means your generated image is more aligned with the prompt,
-        # while a lower guidance_scale value means your generated image has more space to deviate from the prompt.
+        #while a lower guidance_scale value means your generated image has more space to deviate from the prompt.
 
         #fixing colors
         if len(image.shape) == 2:
@@ -227,7 +234,7 @@ def iti_delete_all_photos(request):
 
 
 
-#help function
+#assistance function
 def check_image_model(photo_model, photo_id):
     if photo_model == 'Photo': photo = get_object_or_404(Photo, id=photo_id)
     elif photo_model == 'texttoimagePhoto': photo = get_object_or_404(texttoimagePhoto, id=photo_id)

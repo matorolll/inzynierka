@@ -16,19 +16,28 @@
                         <form id="myForm" method="post" action="{% url 'tti_run' %}">
                             {% csrf_token %}
                             <h5 class="card-title">Write prompt</h5>
+                            </br>
+                            <label for="model_input">Select Model:</label>
+                            <select name="model_input" id="model_input">
+                                <option value="stabilityai/stable-diffusion-xl-base-1.0">stabilityai/stable-diffusion-xl-base-1.0</option>
+                                <option value="stabilityai/stable-diffusion-2-1">stabilityai/stable-diffusion-2-1</option>
+                                <option value="runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</option>
+                                <option value="kandinsky-community/kandinsky-2-2-decoder">kandinsky-community/kandinsky-2-2-decoder</option>
+                            </select>
+                            </br>
                             <textarea name="text_input" rows="5" cols="60" required></textarea>
                             </br>
-                            <label for="seed_input">Seed Input:</label>
-                            <input type="number" name="seed_input" id="seed_input" placeholder="Enter an integer or leave blank for random">
+                            <label for="seed_input">Seed:</label>
+                            <input type="number" name="seed_input" id="seed_input" value="598598540">
                             <button type="button" onclick="generateRandomSeed()">Generate Random Seed</button>
                             </br>
                             <label for="guidance_scale_input">Guidance Scale:</label>
-                            <input type="range" name="guidance_scale_input" id="guidance_scale_input" min="0.0" max="20.0" step="0.1" value="0.0">
-                            <output for="guidance_scale_input">0.0</output>
+                            <input type="range" name="guidance_scale_input" id="guidance_scale_input" min="0.0" max="20.0" step="0.1" value="3.1">
+                            <output for="guidance_scale_input">3.1</output>
                             </br>
-                            <label for="steps_input">Steps Input:</label>
-                            <input type="range" name="steps_input" id="steps_input" min="1" max="100" value="1">
-                            <output for="steps_input">1</output>
+                            <label for="steps_input">Steps:</label>
+                            <input type="range" name="steps_input" id="steps_input" min="1" max="100" value="25">
+                            <output for="steps_input">25</output>
                         </form>
                     </div>
                 </div>
@@ -65,59 +74,55 @@
     <form action="{% url 'tti_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all texttoimage photos</button>
-      </form>
+    </form>
 
-      <script>
-        function checkAndSubmit() {
-            var formData = new FormData(document.getElementById('myForm'));
+<script>
+function checkAndSubmit() {
+    var formData = new FormData(document.getElementById('myForm'));
         
-            fetch(document.getElementById('myForm').action, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
-                var texttoimage = document.createElement('img');
-                texttoimage.src = data.changed_image_url;
-                texttoimage.alt = 'changed image';
-                texttoimage.style = 'max-height: 100px';
-                document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+    fetch(document.getElementById('myForm').action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="Changed Image" style="max-height: 200px">';
+        var texttoimage = document.createElement('img');
+        texttoimage.src = data.changed_image_url;
+        texttoimage.alt = 'changed image';
+        texttoimage.style = 'max-height: 100px';
+        document.getElementById('texttoimage_image_from_base').appendChild(texttoimage);
+    })
+    .catch(error => { console.error('Error:', error)});
+}
 
+function generateRandomSeed() {
+    var randomSeed = Math.floor(Math.random() * 1000000000) + 1;
+    document.getElementById("seed_input").value = randomSeed;
+}
 
+var guidanceSlider = document.getElementById("guidance_scale_input");
+var guidanceOutput = document.querySelector("output[for=guidance_scale_input]");
 
-        function generateRandomSeed() {
-            var randomSeed = Math.floor(Math.random() * 1000000000) + 1;
-            document.getElementById("seed_input").value = randomSeed;
-        }
+var stepsSlider = document.getElementById("steps_input");
+var stepsOutput = document.querySelector("output[for=steps_input]");
 
-    var guidanceSlider = document.getElementById("guidance_scale_input");
-    var guidanceOutput = document.querySelector("output[for=guidance_scale_input]");
+guidanceSlider.addEventListener("input", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
 
-    var stepsSlider = document.getElementById("steps_input");
-    var stepsOutput = document.querySelector("output[for=steps_input]");
+guidanceSlider.addEventListener("change", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
 
-    guidanceSlider.addEventListener("input", function() {
-        guidanceOutput.textContent = guidanceSlider.value;
-    });
+stepsSlider.addEventListener("input", function() {
+    stepsOutput.textContent = stepsSlider.value;
+});
 
-    guidanceSlider.addEventListener("change", function() {
-        guidanceOutput.textContent = guidanceSlider.value;
-    });
-
-    stepsSlider.addEventListener("input", function() {
-        stepsOutput.textContent = stepsSlider.value;
-    });
-
-    stepsSlider.addEventListener("change", function() {
-        stepsOutput.textContent = stepsSlider.value;
-    });
-        </script>
+stepsSlider.addEventListener("change", function() {
+    stepsOutput.textContent = stepsSlider.value;
+});
+</script>
 
 
 
