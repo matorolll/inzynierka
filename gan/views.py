@@ -115,8 +115,8 @@ def tti_run(request):
 
 def tti_script(text_input, seed, guidance_scale, steps, model):
     import torch, cv2
-    from diffusers.utils import make_image_grid
-    make_image_grid([init_image, image], rows=1, cols=2)
+    #from diffusers.utils import make_image_grid
+    #make_image_grid([init_image, image], rows=1, cols=2)
 
     torch.manual_seed(seed)
     if model == "stabilityai/stable-diffusion-xl-base-1.0":
