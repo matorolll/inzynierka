@@ -253,6 +253,13 @@ def inpaint_run(request):
     from diffusers.utils import load_image, make_image_grid
 
     if request.method == 'POST':
+        text_input = request.POST.get('text_input')
+        seed = int(request.POST.get('seed_input'))
+        guidance_scale = float(request.POST.get('guidance_scale_input'))
+        steps = int(request.POST.get('steps_input'))
+        model = request.POST.get('model_input')
+
+
         photo_id = request.POST.get('photo_id')
         photo_model = request.POST.get('photo_model')
         photo = check_image_model(photo_model, photo_id)
@@ -264,28 +271,20 @@ def inpaint_run(request):
         image_io = BytesIO(image_data)
         mask_image = Image.open(image_io)
 
-
         strength = float(0.3)
-        text_input = "big cat"
 
 
-        #processed_mask = load_image(mask_image)
-        #processed_photo = load_image(photo)
-
-        #print(processed_mask)
-        #print(processed_photo)
-
-        new_photo = inpaint_script(photo,mask_image,strength,text_input)
+        new_photo = inpaint_script(photo,mask_image,strength,text_input,seed, guidance_scale, steps, model)
 
 
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
 
-def inpaint_script(photo,masked_image,strength,text_input):
+def inpaint_script(photo,masked_image,strength,text_input,seed, guidance_scale, steps, model):
         import torch, cv2
         from diffusers import AutoPipelineForInpainting
-        from diffusers.utils import make_image_grid, load_image
+        from diffusers.utils import load_image
 
 
         pipe = AutoPipelineForInpainting.from_pretrained(
@@ -294,7 +293,6 @@ def inpaint_script(photo,masked_image,strength,text_input):
         pipe.enable_xformers_memory_efficient_attention()
 
         init_image = load_image(photo.image.path)
-        mask_image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/inpaint_mask.png")
         mask_image = load_image(masked_image)
 
 

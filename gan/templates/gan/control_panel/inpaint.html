@@ -12,23 +12,52 @@
             <div class="col-sm-4">
                 <div class="card" style="height: 28rem;">
                     <div class="card-body text-center">
-                        <form id="myForm" method="post" action="{% url 'inpaint_run' %}">
-                            {% csrf_token %}
-                            <h5 class="card-title" id="instructionDiv">Click image from below to add to edit</h5>
-                            <canvas id="myCanvas"></canvas>
-                            <button onclick="saveImage()" id="saveButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Zapisz zmieniony obraz</button>
-                            <button onclick="reset()" id="resetButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Reset</button>
-                        </form>
+                        <h5 class="card-title" id="instructionDiv">Click image from below to add to edit</h5>
+                        <canvas id="myCanvas"></canvas>
+                        <button onclick="saveImage()" id="saveButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Create Mask</button>
+                        <button onclick="reset()" id="resetButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Reset</button>
                     </div>
                 </div>
             </div>
             
             <div class="col-sm-4">
                 <div class="card text-center" style="height: 28rem;">
-                    <div class="card-body">
+                    <div class="card-body" id="middleOptionsButton" style="display: none;">
                         <h5 class="card-title">
-                            <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                            <h5 class="card-title">Write prompts to edit selected area</h5>
+
+                            <form id="myForm" method="post" action="{% url 'inpaint_run' %}">
+                                {% csrf_token %}
+
                             <div id="maskedImage"></div>
+                        </br>
+
+                        
+                        <label for="model_input">Select Model:</label>
+                        <select name="model_input" id="model_input">
+                            <option value="runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</option>
+                            <option value="stabilityai/stable-diffusion-2-1">stabilityai/stable-diffusion-2-1</option>
+                            <option value="kandinsky-community/kandinsky-2-2-decoder">kandinsky-community/kandinsky-2-2-decoder</option>
+                            <option value="stabilityai/stable-diffusion-xl-base-1.0">stabilityai/stable-diffusion-xl-base-1.0</option>
+                            </select>
+                            </br>
+                            <textarea name="text_input" rows="2" cols="60" required></textarea>
+                            </br>
+                            <label for="seed_input">Seed:</label>
+                            <input type="number" name="seed_input" id="seed_input" value="598598540">
+                            <button type="button" onclick="generateRandomSeed()">Generate Random Seed</button>
+                            </br>
+                            <label for="guidance_scale_input">Guidance Scale:</label>
+                            <input type="range" name="guidance_scale_input" id="guidance_scale_input" min="0.0" max="20.0" step="0.1" value="3.1">
+                            <output for="guidance_scale_input">3.1</output>
+                            </br>
+                            <label for="steps_input">Steps:</label>
+                            <input type="range" name="steps_input" id="steps_input" min="1" max="100" value="25">
+                            <output for="steps_input">25</output>
+
+                            <button type="button" id="scriptButton" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                        </form>
+
                         </h5>
                     </div>
                 </div>
@@ -147,6 +176,7 @@ function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
     var instructionDiv = document.getElementById('instructionDiv');
     var maskedImageDiv = document.getElementById('maskedImage');
 
+    var middleOptionsButton = document.getElementById('middleOptionsButton');
 
     saveButton.style.display = 'block';
     resetButton.style.display = 'block';
@@ -167,6 +197,8 @@ function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
         instructionDiv.innerHTML = 'Click image from below to add to edit';
         saveButton.style.display = 'none';
         resetButton.style.display = 'none';
+
+        middleOptionsButton.style.display = 'none';
         clearCanvas();
     }
 
@@ -246,6 +278,10 @@ function createCanvas(){
 }
 
 function saveImage() {
+    var middleOptionsButton = document.getElementById('middleOptionsButton');
+    middleOptionsButton.style.display = 'block';
+
+
     var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     var tolerance = 5;
 
@@ -282,6 +318,37 @@ function saveImage() {
 
     context.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
 }
+
+
+
+
+function generateRandomSeed() {
+    var randomSeed = Math.floor(Math.random() * 1000000000) + 1;
+    document.getElementById("seed_input").value = randomSeed;
+}
+
+var guidanceSlider = document.getElementById("guidance_scale_input");
+var guidanceOutput = document.querySelector("output[for=guidance_scale_input]");
+
+var stepsSlider = document.getElementById("steps_input");
+var stepsOutput = document.querySelector("output[for=steps_input]");
+
+guidanceSlider.addEventListener("input", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
+
+guidanceSlider.addEventListener("change", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
+
+stepsSlider.addEventListener("input", function() {
+    stepsOutput.textContent = stepsSlider.value;
+});
+
+stepsSlider.addEventListener("change", function() {
+    stepsOutput.textContent = stepsSlider.value;
+});
+
 
 </script>
 
