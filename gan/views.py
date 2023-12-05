@@ -283,20 +283,26 @@ def inpaint_run(request):
 
 def inpaint_script(photo,masked_image,strength,text_input,seed, guidance_scale, steps, model):
         import torch, cv2
-        from diffusers import AutoPipelineForInpainting
         from diffusers.utils import load_image
+        from diffusers import AutoPipelineForInpainting
 
-
-        pipe = AutoPipelineForInpainting.from_pretrained(
-            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16"
-        ).to("cuda")
+        torch.manual_seed(seed)
+        if model == "diffusers/stable-diffusion-xl-1.0-inpainting-0.1":
+            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+        elif model == "kandinsky-community/kandinsky-2-2-decoder-inpaint":
+            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+        else: 
+            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+        
         pipe.enable_xformers_memory_efficient_attention()
+        pipe.to('cuda')
+
 
         init_image = load_image(photo.image.path)
         mask_image = load_image(masked_image)
 
 
-        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image).images[0])
+        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance_scale=guidance_scale, steps=steps).images[0])
         #image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
 
 
