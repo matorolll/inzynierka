@@ -8,8 +8,6 @@
 {% block content %}
 <div data-testid="image" class="image-container svelte-p3y7hu" style="position: relative;">
 
-    <img id="originalImage" src="../../../../media/gan_photos/esrgan/2_esrgan.png" style="display: none">
-    <button onclick="saveImage()">Zapisz zmieniony obraz</button>
 
 
 
@@ -18,14 +16,15 @@
     <div class="m-3">
         <div class="row">
             <div class="col-sm-4">
-                <div class="card" style="height: 24rem;">
+                <div class="card" style="height: 28rem;">
                     <div class="card-body text-center">
                         <form id="myForm" method="post" action="{% url 'inpaint_run' %}">
                             {% csrf_token %}
-                            <h5 class="card-title">Click image from below to add to edit</h5>
-                            <div id="image_to_edit"></div>
+                            <h5 class="card-title" id="instructionDiv">Click image from below to add to edit</h5>
                             <canvas id="myCanvas"></canvas>
-
+                            <button onclick="saveImage()" id="saveButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Zapisz zmieniony obraz</button>
+                            <button onclick="reset()" id="resetButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Reset</button>
+                            
                         </form>
 
                     </div>
@@ -33,17 +32,18 @@
             </div>
             
             <div class="col-sm-4">
-                <div class="card text-center" style="height: 24rem;">
+                <div class="card text-center" style="height: 28rem;">
                     <div class="card-body">
                         <h5 class="card-title">
                             <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                            <div id="maskedImage"></div>
                         </h5>
                     </div>
                 </div>
             </div>
             
             <div class="col-sm-4">
-                <div class="card" style="height: 24rem;">
+                <div class="card" style="height: 28rem;">
                     <div class="card-body text-center">
                         <h5 class="card-title">Result</h5>
                         <div id="changed_img" style="max-height: 100px"></div>
@@ -58,7 +58,7 @@
         {% for session in sessions %}
         {% for photo in session.photo_set.all %}
             <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
-                data-photo-id="{{ photo.id }}" data-photo-model="Photo" onclick="moveImageToEdit(this, 'image_from_base', 'image_to_edit')">
+                data-photo-id="{{ photo.id }}" data-photo-model="Photo" onclick="moveImageToEdit(this, 'image_from_base', 'myCanvas')">
         {% endfor %}
     {% endfor %}
     </div>
@@ -67,7 +67,7 @@
         <h2>TextToImage Image from base:</h2>
         {% for ttiPhoto in ttiPhotos %}
             <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'image_to_edit')">
+            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'myCanvas')">
         {% endfor %}
     </div>
     
@@ -75,7 +75,7 @@
         <h2>ImageToImage Image from base:</h2>
         {% for itiPhoto in itiPhotos %}
             <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'image_to_edit')">
+            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'myCanvas')">
         {% endfor %}
     </div>
 
@@ -125,125 +125,149 @@ function checkAndSubmit() {
     }
 }
 
+var selectedImage = null;
+
 
 
 function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
     var sourceContainer = document.getElementById(sourceContainerId);
     var targetContainer = document.getElementById(targetContainerId);
     var changedImgContainer = document.getElementById('changed_img');
+    var saveButton = document.getElementById('saveButton');
+    var resetButton = document.getElementById('resetButton');
+    var instructionDiv = document.getElementById('instructionDiv');
+    var maskedImageDiv = document.getElementById('maskedImage');
 
-    if (targetContainer.children.length > 0) return;
 
-    sourceContainer.removeChild(imgElement);
-    imgElement.style.maxHeight = '200px';
+    saveButton.style.display = 'block';
+    resetButton.style.display = 'block';
+    instructionDiv.innerHTML = 'Start drawing, then press button to create mask';
 
-    imgElement.onclick = function() {
+    if (targetContainer.children.length > 0)  return;
+
+    function resetImage() {
+        maskedImageDiv.innerHTML = '';
+
         changedImgContainer.innerHTML = '';
         sourceContainer.appendChild(imgElement);
         imgElement.style.maxHeight = '100px';
         imgElement.onclick = function() {
             moveImageToEdit(this, sourceContainerId, targetContainerId);
         };
-    };
+        selectedImage = null;
+        instructionDiv.innerHTML = 'Click image from below to add to edit';
+        saveButton.style.display = 'none';
+        resetButton.style.display = 'none';
+        clearCanvas();
+    }
+
+    sourceContainer.removeChild(imgElement);
+    imgElement.style.maxHeight = '200px';
+
+    imgElement.onclick = resetImage;
 
     targetContainer.appendChild(imgElement);
+    selectedImage = imgElement;
+    createCanvas();
+    if (resetButton) resetButton.onclick = resetImage;
+}
+
+var saveButton = document.getElementById('saveButton');
+if (saveButton) saveButton.onclick = saveImage;
+
+function clearCanvas() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 
-    document.getElementById('myForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-    });
-
-
-
-
-
- // Pobierz obraz oryginalny i ustaw go jako tło canvas
- var originalImage = document.getElementById('originalImage');
+var originalImage = selectedImage || document.getElementById('originalImage');
 var canvas = document.getElementById('myCanvas');
 var context = canvas.getContext('2d');
-canvas.width = 400;
-canvas.height = 250;
-context.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
 
-var isDrawing = false;
+function createCanvas(){
+    originalImage = selectedImage || document.getElementById('originalImage');
+    canvas = document.getElementById('myCanvas');
+    context = canvas.getContext('2d');
+    var maxHeight = 280;
 
-// Funkcja uruchamiana po naciśnięciu przycisku zapisu
+    var aspectRatio = originalImage.width / originalImage.height;
+
+    if (originalImage.height > maxHeight) {
+        canvas.height = maxHeight;
+        canvas.width = maxHeight * aspectRatio;
+    } else {
+        canvas.width = originalImage.width;
+        canvas.height = originalImage.height;
+    }
+    context.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+
+    var isDrawing = false;
+
+    function startDrawing(e) {
+        isDrawing = true;
+        draw(e);
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        context.beginPath();
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+
+        context.lineWidth = 50;
+        context.lineCap = 'round';
+        context.strokeStyle = '#b803ff';
+
+        var rect = canvas.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+
+        context.lineTo(x, y);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(x, y);
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+}
+
 function saveImage() {
-    // Pobierz dane obrazu z canvas
     var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    
-    // Przeiteruj po każdym pikselu i zmień kolor zgodnie z warunkiem
     var tolerance = 5;
 
-for (var i = 0; i < imageData.data.length; i += 4) {
-    var red = imageData.data[i];
-    var green = imageData.data[i + 1];
-    var blue = imageData.data[i + 2];
+    for (var i = 0; i < imageData.data.length; i += 4) {
+        var red = imageData.data[i];
+        var green = imageData.data[i + 1];
+        var blue = imageData.data[i + 2];
 
-    // Sprawdź, czy piksel jest w zakresie koloru fioletowego z tolerancją +-5
-    var isPurple = Math.abs(red - 184) <= tolerance &&
-                   Math.abs(green - 3) <= tolerance &&
-                   Math.abs(blue - 255) <= tolerance;
+        var isPurple = Math.abs(red - 184) <= tolerance &&
+            Math.abs(green - 3) <= tolerance &&
+            Math.abs(blue - 255) <= tolerance;
 
-    // Jeśli piksel jest w zakresie koloru fioletowego, ustaw na biały, w przeciwnym razie na czarny
-    if (isPurple) {
-        imageData.data[i] = 255; // Red
-        imageData.data[i + 1] = 255; // Green
-        imageData.data[i + 2] = 255; // Blue
-    } else {
-        imageData.data[i] = 0; // Red
-        imageData.data[i + 1] = 0; // Green
-        imageData.data[i + 2] = 0; // Blue
+        if (isPurple) {
+            imageData.data[i] = 255; 
+            imageData.data[i + 1] = 255; 
+            imageData.data[i + 2] = 255;
+        } else {
+            imageData.data[i] = 0;
+            imageData.data[i + 1] = 0;
+            imageData.data[i + 2] = 0;
+        }
     }
-}
-    // Wstaw zmodyfikowane dane z powrotem do canvas
+
     context.putImageData(imageData, 0, 0);
 
-    // Otwórz nowe okno i zapisz obraz
     var editedImage = canvas.toDataURL('image/png');
-    var newWindow = window.open();
-    newWindow.document.write('<img src="' + editedImage + '" width="100%">');
+    var maskedImageDiv = document.getElementById('maskedImage');
+    maskedImageDiv.innerHTML = '<img src="' + editedImage + '" style="max-height: 500px;">';
+
+    context.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
 }
-
-function startDrawing(e) {
-    isDrawing = true;
-    draw(e);
-}
-
-function stopDrawing() {
-    isDrawing = false;
-    context.beginPath();
-}
-
-function draw(e) {
-    if (!isDrawing) return;
-
-    context.lineWidth = 50;
-    context.lineCap = 'round';
-    context.strokeStyle = '#b803ff';
-
-    var rect = canvas.getBoundingClientRect();
-    var x = e.clientX - rect.left;
-    var y = e.clientY - rect.top;
-
-    context.lineTo(x, y);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(x, y);
-}
-
-canvas.addEventListener('mousedown', startDrawing);
-canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', stopDrawing);
-canvas.addEventListener('mouseout', stopDrawing);
-
-
-
-
-
-
-
 
 </script>
 
