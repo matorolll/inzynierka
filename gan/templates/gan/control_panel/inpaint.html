@@ -6,12 +6,6 @@
 
 
 {% block content %}
-<div data-testid="image" class="image-container svelte-p3y7hu" style="position: relative;">
-
-
-
-
-
     <div>INPAINT</div> 
     <div class="m-3">
         <div class="row">
@@ -24,9 +18,7 @@
                             <canvas id="myCanvas"></canvas>
                             <button onclick="saveImage()" id="saveButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Zapisz zmieniony obraz</button>
                             <button onclick="reset()" id="resetButton" style="display: none;" type="button" class="btn btn-outline-secondary btn-block">Reset</button>
-                            
                         </form>
-
                     </div>
                 </div>
             </div>
@@ -79,10 +71,21 @@
         {% endfor %}
     </div>
 
+    <div class="m-3" id="inpaint_image_from_base">
+        <h2>Inpaint Image from base:</h2>
+        {% for inpaintPhoto in inpaintPhotos %}
+            <img src="{{ inpaintPhoto.image.url }}" alt="connect" style="max-height: 100px"
+            data-photo-id="{{ inpaintPhoto.id }}" data-photo-model="inpaintPhoto" onclick="moveImageToEdit(this, 'inpaint_image_from_base', 'myCanvas')">
+        {% endfor %}
+    </div>
+
+
+
+
     <form action="{% url 'iti_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all image to image photos from database</button>
-      </form>
+    </form>
 
       <style>
         canvas {
@@ -92,16 +95,22 @@
 <script>
 
 function checkAndSubmit() {
-    var imageToEdit = document.getElementById('image_to_edit');
+    var imageToEdit = document.getElementById('myCanvas');
+    var maskedImage = document.getElementById('maskedImage');
+
     if (imageToEdit.children.length > 0) {
         var selectedImage = imageToEdit.children[0];
+        var selectedMask = maskedImage.children[0];
         var photoId = selectedImage.getAttribute('data-photo-id');
+        var maskUrl = selectedMask.getAttribute('src')
+        console.log(maskUrl)
 
         var formData = new FormData(document.getElementById('myForm'));
         var photoModel = selectedImage.getAttribute('data-photo-model');
 
         formData.append('photo_id', photoId);
         formData.append('photo_model', photoModel);
+        formData.append('maskUrl', maskUrl)
 
 
         fetch(document.getElementById('myForm').action, {
@@ -265,6 +274,11 @@ function saveImage() {
     var editedImage = canvas.toDataURL('image/png');
     var maskedImageDiv = document.getElementById('maskedImage');
     maskedImageDiv.innerHTML = '<img src="' + editedImage + '" style="max-height: 500px;">';
+
+
+    //var editedImage = canvas.toDataURL('image/png');
+    //var newWindow = window.open();
+    //newWindow.document.write('<img src="' + editedImage + '" width="100%">');
 
     context.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
 }

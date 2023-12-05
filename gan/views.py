@@ -2,7 +2,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404, redirect
 import os, io
 from main.models import Photo, Session
-from .models import esrganPhoto, texttoimagePhoto, imagetoimagePhoto
+from .models import esrganPhoto, texttoimagePhoto, imagetoimagePhoto, inpaintPhoto
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import numpy
@@ -234,29 +234,90 @@ def iti_delete_all_photos(request):
     return redirect('iti_view')
 
 
-#image to image
+#inpaint
 def inpaint_view(request):
     sessions = Session.objects.all()
     photos = Photo.objects.all()
     ttiPhotos = texttoimagePhoto.objects.all()
     itiPhotos = imagetoimagePhoto.objects.all()
+    inpaintPhotos = inpaintPhoto.objects.all()
 
-    context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos, 'itiPhotos' : itiPhotos }
+    context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos, 'itiPhotos' : itiPhotos, 'inpaintPhotos' : inpaintPhotos }
     return render(request, 'gan/control_panel/inpaint.html', context)
 
+import base64
+from PIL import Image
+from io import BytesIO
+
 def inpaint_run(request):
+    from diffusers.utils import load_image, make_image_grid
+
     if request.method == 'POST':
         photo_id = request.POST.get('photo_id')
         photo_model = request.POST.get('photo_model')
         photo = check_image_model(photo_model, photo_id)
 
-        strength = float(request.POST.get('prompt_strength'))
-        text_input = request.POST.get('text_input')
 
-        new_photo = []
-        
+        mask_data_url = request.POST.get('maskUrl')
+        _, encoded_data = mask_data_url.split(',', 1)
+        image_data = base64.b64decode(encoded_data)
+        image_io = BytesIO(image_data)
+        mask_image = Image.open(image_io)
+
+
+        strength = float(0.3)
+        text_input = "big cat"
+
+
+        #processed_mask = load_image(mask_image)
+        #processed_photo = load_image(photo)
+
+        #print(processed_mask)
+        #print(processed_photo)
+
+        new_photo = inpaint_script(photo,mask_image,strength,text_input)
+
+
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
+
+
+def inpaint_script(photo,masked_image,strength,text_input):
+        import torch, cv2
+        from diffusers import AutoPipelineForInpainting
+        from diffusers.utils import make_image_grid, load_image
+
+
+        pipe = AutoPipelineForInpainting.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16"
+        ).to("cuda")
+        pipe.enable_xformers_memory_efficient_attention()
+
+        init_image = load_image(photo.image.path)
+        mask_image = load_image("https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/inpaint_mask.png")
+        mask_image = load_image(masked_image)
+
+
+        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image).images[0])
+        #image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
+
+
+        if len(image.shape) == 2:
+            _, image_bytes = cv2.imencode('.png', image)
+        else:
+            _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        
+        #generating title
+        title = '{}.png'.format(text_input)
+
+        #saving
+        image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
+        new_photo = inpaintPhoto(prompt=text_input, image=image_file)
+        new_photo.save()
+        return new_photo
+
+
+
 
 
 def inpaint_delete_all_photos(request):
