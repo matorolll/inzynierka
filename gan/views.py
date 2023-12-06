@@ -119,17 +119,29 @@ def tti_script(text_input, seed, guidance_scale, steps, model):
     #make_image_grid([init_image, image], rows=1, cols=2)
 
     torch.manual_seed(seed)
-    if model == "stabilityai/stable-diffusion-xl-base-1.0":
-        from diffusers import StableDiffusionXLPipeline
-        pipe = StableDiffusionXLPipeline.from_pretrained(model, torch_dtype=torch.float16)
-    elif model == "kandinsky-community/kandinsky-2-2-decoder":
-        from diffusers import AutoPipelineForText2Image
-        pipe = AutoPipelineForText2Image.from_pretrained(model, torch_dtype=torch.float16)
-    else: 
-        from diffusers import StableDiffusionPipeline
-        pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
-    
-    pipe.to('cuda')
+
+    if torch.cuda.is_available():
+        if model == "stabilityai/stable-diffusion-xl-base-1.0":
+            from diffusers import StableDiffusionXLPipeline
+            pipe = StableDiffusionXLPipeline.from_pretrained(model, torch_dtype=torch.float16)
+        elif model == "kandinsky-community/kandinsky-2-2-decoder":
+            from diffusers import AutoPipelineForText2Image
+            pipe = AutoPipelineForText2Image.from_pretrained(model, torch_dtype=torch.float16)
+        else: 
+            from diffusers import StableDiffusionPipeline
+            pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
+        pipe.to('cuda')
+    else:
+        if model == "stabilityai/stable-diffusion-xl-base-1.0":
+            from diffusers import StableDiffusionXLPipeline
+            pipe = StableDiffusionXLPipeline.from_pretrained(model)
+        elif model == "kandinsky-community/kandinsky-2-2-decoder":
+            from diffusers import AutoPipelineForText2Image
+            pipe = AutoPipelineForText2Image.from_pretrained(model)
+        else: 
+            from diffusers import StableDiffusionPipeline
+            pipe = StableDiffusionPipeline.from_pretrained(model)
+        pipe.to('cpu')
 
     #can comment xformers
     pipe.enable_xformers_memory_efficient_attention()
