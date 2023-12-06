@@ -206,6 +206,8 @@ def iti_script(photo, strength, text_input, IsComposition):
         from diffusers import AutoPipelineForImage2Image
         from diffusers.utils import load_image, make_image_grid
 
+        torch.manual_seed(23098428)
+
         if torch.cuda.is_available(): #gpu usage
             pipe = AutoPipelineForImage2Image.from_pretrained(
                 "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
@@ -227,10 +229,44 @@ def iti_script(photo, strength, text_input, IsComposition):
         #turning to np array
         generated_image = pipe(text_input, init_image, strength, guidance_scale=16.0).images[0]
         if IsComposition:
-            img1 = pipe(text_input, init_image, strength=0.2, guidance_scale=16.0).images[0]
-            img2 = pipe(text_input, init_image, strength=0.4, guidance_scale=16.0).images[0]
-            img3 = pipe(text_input, init_image, strength=0.6, guidance_scale=16.0).images[0]
-            grid = make_image_grid([init_image, img1, img2, img3], rows=1, cols=4)
+            img1 = pipe(text_input, init_image, strength=0.2, guidance_scale=0.0).images[0]
+            img2 = pipe(text_input, init_image, strength=0.4, guidance_scale=0.0).images[0]
+            img3 = pipe(text_input, init_image, strength=0.6, guidance_scale=0.0).images[0]
+            img4 = pipe(text_input, init_image, strength=0.8, guidance_scale=0.0).images[0]
+            img5 = pipe(text_input, init_image, strength=1.0, guidance_scale=0.0).images[0]
+
+            img6 = pipe(text_input, init_image, strength=0.2, guidance_scale=5.0).images[0]
+            img7 = pipe(text_input, init_image, strength=0.4, guidance_scale=5.0).images[0]
+            img8 = pipe(text_input, init_image, strength=0.6, guidance_scale=5.0).images[0]
+            img9 = pipe(text_input, init_image, strength=0.8, guidance_scale=5.0).images[0]
+            img10 = pipe(text_input, init_image, strength=1.0, guidance_scale=5.0).images[0]
+
+            img11 = pipe(text_input, init_image, strength=0.2, guidance_scale=10.0).images[0]
+            img12 = pipe(text_input, init_image, strength=0.4, guidance_scale=10.0).images[0]
+            img13 = pipe(text_input, init_image, strength=0.6, guidance_scale=10.0).images[0]
+            img14 = pipe(text_input, init_image, strength=0.8, guidance_scale=10.0).images[0]
+            img15 = pipe(text_input, init_image, strength=1.0, guidance_scale=10.0).images[0]
+
+            img16 = pipe(text_input, init_image, strength=0.2, guidance_scale=15.0).images[0]
+            img17 = pipe(text_input, init_image, strength=0.4, guidance_scale=15.0).images[0]
+            img18 = pipe(text_input, init_image, strength=0.6, guidance_scale=15.0).images[0]
+            img19 = pipe(text_input, init_image, strength=0.8, guidance_scale=15.0).images[0]
+            img20 = pipe(text_input, init_image, strength=1.0, guidance_scale=15.0).images[0]
+
+            img21 = pipe(text_input, init_image, strength=0.2, guidance_scale=20.0).images[0]
+            img22 = pipe(text_input, init_image, strength=0.4, guidance_scale=20.0).images[0]
+            img23 = pipe(text_input, init_image, strength=0.6, guidance_scale=20.0).images[0]
+            img24 = pipe(text_input, init_image, strength=0.8, guidance_scale=20.0).images[0]
+            img25 = pipe(text_input, init_image, strength=1.0, guidance_scale=20.0).images[0]
+
+            grid = make_image_grid(
+                [
+                img1, img2, img3, img4, img5,
+                img6, img7, img8, img9, img10,
+                img11, img12, img13, img14, img15,
+                img16, img17, img18, img19, img20,
+                img21, img22, img23, img24, img25,                                   
+                ], rows=5, cols=5)
             image = numpy.array(grid)
         
         else:
