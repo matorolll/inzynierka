@@ -6,6 +6,8 @@ from .models import esrganPhoto, texttoimagePhoto, imagetoimagePhoto, inpaintPho
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import numpy
+import base64
+from PIL import Image
 
 #views build
 #modules_name : 
@@ -17,6 +19,7 @@ import numpy
 def gan_control_panel_view(request):
     context = {}
     return render(request, 'gan/control_panel/control_panel.html', context)
+
 
 #esrgan
 def esrgan_view(request):
@@ -260,9 +263,6 @@ def inpaint_view(request):
     context = {'sessions': sessions, 'photos': photos, 'ttiPhotos' : ttiPhotos, 'itiPhotos' : itiPhotos, 'inpaintPhotos' : inpaintPhotos }
     return render(request, 'gan/control_panel/inpaint.html', context)
 
-import base64
-from PIL import Image
-
 def inpaint_run(request):
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
@@ -287,7 +287,6 @@ def inpaint_run(request):
 
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
-
 
 def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
         import torch, cv2
@@ -338,7 +337,6 @@ def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
         new_photo.save()
         return new_photo
 
-
 def inpaint_delete_all_photos(request):
     itiPhotos = imagetoimagePhoto.objects.all()
     
@@ -349,7 +347,6 @@ def inpaint_delete_all_photos(request):
 
     itiPhotos.delete()
     return redirect('iti_view')
-
 
 
 #assistance function
