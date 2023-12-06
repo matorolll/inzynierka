@@ -158,6 +158,8 @@ def tti_script(text_input, seed, guidance_scale, steps, model):
 
     #saving
     image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
+
+
     new_photo = texttoimagePhoto(prompt=text_input, image=image_file)
     new_photo.save()
     return new_photo
@@ -189,19 +191,20 @@ def iti_run(request):
         photo_id = request.POST.get('photo_id')
         photo_model = request.POST.get('photo_model')
         photo = check_image_model(photo_model, photo_id)
+        is_composition = request.POST.get('is_composition')
 
         strength = float(request.POST.get('prompt_strength'))
         text_input = request.POST.get('text_input')
 
-        new_photo = iti_script(photo, strength, text_input)
+        new_photo = iti_script(photo, strength, text_input, is_composition)
         
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
-def iti_script(photo, strength, text_input):
+def iti_script(photo, strength, text_input, IsComposition):
         import torch, cv2
         from diffusers import AutoPipelineForImage2Image
-        from diffusers.utils import load_image
+        from diffusers.utils import load_image, make_image_grid
 
         if torch.cuda.is_available(): #gpu usage
             pipe = AutoPipelineForImage2Image.from_pretrained(
@@ -222,7 +225,13 @@ def iti_script(photo, strength, text_input):
 
 
         #turning to np array
-        image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
+        generated_image = pipe(text_input, init_image, strength, guidance_scale=16.0).images[0]
+        if IsComposition:
+            grid = make_image_grid([init_image, generated_image], rows=1, cols=2)
+            image = numpy.array(grid)
+        
+        else:
+            image = numpy.array(generated_image)
 
 
         #fixing colors
@@ -236,6 +245,8 @@ def iti_script(photo, strength, text_input):
 
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
+
+
         new_photo = imagetoimagePhoto(prompt=text_input, image=image_file)
         new_photo.save()
         return new_photo
