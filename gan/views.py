@@ -115,12 +115,10 @@ def tti_run(request):
 
 def tti_script(text_input, seed, guidance_scale, steps, model):
     import torch, cv2
-    #from diffusers.utils import make_image_grid
-    #make_image_grid([init_image, image], rows=1, cols=2)
 
     torch.manual_seed(seed)
 
-    if torch.cuda.is_available():
+    if torch.cuda.is_available(): #gpu usage
         if model == "stabilityai/stable-diffusion-xl-base-1.0":
             from diffusers import StableDiffusionXLPipeline
             pipe = StableDiffusionXLPipeline.from_pretrained(model, torch_dtype=torch.float16)
@@ -131,7 +129,9 @@ def tti_script(text_input, seed, guidance_scale, steps, model):
             from diffusers import StableDiffusionPipeline
             pipe = StableDiffusionPipeline.from_pretrained(model, torch_dtype=torch.float16)
         pipe.to('cuda')
-    else:
+        pipe.enable_xformers_memory_efficient_attention()
+
+    else: #cpu usage
         if model == "stabilityai/stable-diffusion-xl-base-1.0":
             from diffusers import StableDiffusionXLPipeline
             pipe = StableDiffusionXLPipeline.from_pretrained(model)
@@ -143,17 +143,12 @@ def tti_script(text_input, seed, guidance_scale, steps, model):
             pipe = StableDiffusionPipeline.from_pretrained(model)
         pipe.to('cpu')
 
-    #can comment xformers
-    pipe.enable_xformers_memory_efficient_attention()
-
     #turning to np array
     image = numpy.array(pipe(text_input, guidance_scale=guidance_scale, num_inference_steps = steps).images[0])
 
     #fixing colors
-    if len(image.shape) == 2:
-        _, image_bytes = cv2.imencode('.png', image)
-    else:
-       _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+    if len(image.shape) == 2:  _, image_bytes = cv2.imencode('.png', image)
+    else:   _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
         
     #generating title
     title = '{}.png'.format(text_input)
@@ -203,30 +198,38 @@ def iti_run(request):
 def iti_script(photo, strength, text_input):
         import torch, cv2
         from diffusers import AutoPipelineForImage2Image
-        from diffusers.utils import make_image_grid, load_image
+        from diffusers.utils import load_image
 
-        pipe = AutoPipelineForImage2Image.from_pretrained(
-            "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
-        ).to("cuda")
-        pipe.enable_model_cpu_offload()
-        pipe.enable_xformers_memory_efficient_attention()
+        if torch.cuda.is_available(): #gpu usage
+            pipe = AutoPipelineForImage2Image.from_pretrained(
+                "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
+            ).to("cuda")
+            pipe.enable_model_cpu_offload()
+            pipe.enable_xformers_memory_efficient_attention()
+        
+        else: #cpu usage
+            pipe = AutoPipelineForImage2Image.from_pretrained(
+                "runwayml/stable-diffusion-v1-5", use_safetensors=None, safety_checker = None
+            ).to("cup")
+            pipe.enable_model_cpu_offload()
+            pipe.enable_xformers_memory_efficient_attention()
 
+        #loading image
         init_image = load_image(photo.image.path)
+
 
         #turning to np array
         image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
-        #The guidance_scale parameter is used to control how closely aligned the generated image and text prompt are. 
-        #A higher guidance_scale value means your generated image is more aligned with the prompt,
-        #while a lower guidance_scale value means your generated image has more space to deviate from the prompt.
+
 
         #fixing colors
-        if len(image.shape) == 2:
-            _, image_bytes = cv2.imencode('.png', image)
-        else:
-            _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        if len(image.shape) == 2: _, image_bytes = cv2.imencode('.png', image)
+        else: _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
         
+
         #generating title
         title = '{}.png'.format(text_input)
+
 
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
@@ -259,16 +262,12 @@ def inpaint_view(request):
 
 import base64
 from PIL import Image
-from io import BytesIO
 
 def inpaint_run(request):
-    from diffusers.utils import load_image, make_image_grid
-
     if request.method == 'POST':
         text_input = request.POST.get('text_input')
         seed = int(request.POST.get('seed_input'))
         guidance_scale = float(request.POST.get('guidance_scale_input'))
-        steps = int(request.POST.get('steps_input'))
         model = request.POST.get('model_input')
 
 
@@ -280,60 +279,64 @@ def inpaint_run(request):
         mask_data_url = request.POST.get('maskUrl')
         _, encoded_data = mask_data_url.split(',', 1)
         image_data = base64.b64decode(encoded_data)
-        image_io = BytesIO(image_data)
+        image_io = io.BytesIO(image_data)
         mask_image = Image.open(image_io)
 
-        strength = float(0.3)
 
-
-        new_photo = inpaint_script(photo,mask_image,strength,text_input,seed, guidance_scale, steps, model)
-
+        new_photo = inpaint_script(photo,mask_image,text_input,seed, guidance_scale, model)
 
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
 
-def inpaint_script(photo,masked_image,strength,text_input,seed, guidance_scale, steps, model):
+def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
         import torch, cv2
         from diffusers.utils import load_image
         from diffusers import AutoPipelineForInpainting
-
-        torch.manual_seed(seed)
-        if model == "diffusers/stable-diffusion-xl-1.0-inpainting-0.1":
-            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
-        elif model == "kandinsky-community/kandinsky-2-2-decoder-inpaint":
-            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
-        else: 
-            pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
         
-        pipe.enable_xformers_memory_efficient_attention()
-        pipe.to('cuda')
+        torch.manual_seed(seed)
+
+        if torch.cuda.is_available(): #gpu usage
+            if model == "diffusers/stable-diffusion-xl-1.0-inpainting-0.1":
+                pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+            elif model == "kandinsky-community/kandinsky-2-2-decoder-inpaint":
+                pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+            else: 
+                pipe = AutoPipelineForInpainting.from_pretrained(model, torch_dtype=torch.float16 , variant="fp16", use_safetensors=None, safety_checker = None)
+            pipe.enable_xformers_memory_efficient_attention()
+            pipe.to('cuda')
+        else: #cpu usage
+            if model == "diffusers/stable-diffusion-xl-1.0-inpainting-0.1":
+                pipe = AutoPipelineForInpainting.from_pretrained(model, use_safetensors=None, safety_checker = None)
+            elif model == "kandinsky-community/kandinsky-2-2-decoder-inpaint":
+                pipe = AutoPipelineForInpainting.from_pretrained(model, use_safetensors=None, safety_checker = None)
+            else: 
+                pipe = AutoPipelineForInpainting.from_pretrained(model, use_safetensors=None, safety_checker = None)
+            pipe.to('cup')
 
 
+        #loading image and mask
         init_image = load_image(photo.image.path)
         mask_image = load_image(masked_image)
 
+        #fix steps
+        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance_scale=guidance_scale).images[0])
 
-        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance_scale=guidance_scale, steps=steps).images[0])
-        #image = numpy.array(pipe(text_input, init_image, strength, guidance_scale=16.0).images[0])
 
-
-        if len(image.shape) == 2:
-            _, image_bytes = cv2.imencode('.png', image)
-        else:
-            _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        #fixing colors
+        if len(image.shape) == 2: _, image_bytes = cv2.imencode('.png', image)
+        else: _, image_bytes = cv2.imencode('.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
         
+
         #generating title
         title = '{}.png'.format(text_input)
+
 
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
         new_photo = inpaintPhoto(prompt=text_input, image=image_file)
         new_photo.save()
         return new_photo
-
-
-
 
 
 def inpaint_delete_all_photos(request):
@@ -346,11 +349,6 @@ def inpaint_delete_all_photos(request):
 
     itiPhotos.delete()
     return redirect('iti_view')
-
-
-
-
-
 
 
 
