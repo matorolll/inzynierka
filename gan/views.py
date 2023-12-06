@@ -227,7 +227,10 @@ def iti_script(photo, strength, text_input, IsComposition):
         #turning to np array
         generated_image = pipe(text_input, init_image, strength, guidance_scale=16.0).images[0]
         if IsComposition:
-            grid = make_image_grid([init_image, generated_image], rows=1, cols=2)
+            img1 = pipe(text_input, init_image, strength=0.2, guidance_scale=16.0).images[0]
+            img2 = pipe(text_input, init_image, strength=0.4, guidance_scale=16.0).images[0]
+            img3 = pipe(text_input, init_image, strength=0.6, guidance_scale=16.0).images[0]
+            grid = make_image_grid([init_image, img1, img2, img3], rows=1, cols=4)
             image = numpy.array(grid)
         
         else:
