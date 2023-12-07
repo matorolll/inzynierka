@@ -11,16 +11,38 @@
     <div class="m-3">
         <div class="row">
             <div class="col-sm-4">
-                <div class="card" style="height: 24rem;">
+                <div class="card" style="height: 30rem;">
                     <div class="card-body text-center">
                         <form id="myForm" method="post" action="{% url 'iti_run' %}">
                             {% csrf_token %}
                             <h5 class="card-title">Click image from below to add to edit</h5>
                             <div id="image_to_edit"></div>
-                            <h5 class="card-title">Add prompt to edit this photo</h5>
-                            <input type="text" name="text_input" required>
-                            <h5 class="card-title">Add prompt strength</h5>
-                            <input type="text" name="prompt_strength" required>
+
+                            <label for="model_input">Select Model:</label>
+                            <select name="model_input" id="model_input">
+                                <option value="runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</option>
+                                <option value="stabilityai/stable-diffusion-2-1">stabilityai/stable-diffusion-2-1</option>
+                                <option value="kandinsky-community/kandinsky-2-2-decoder">kandinsky-community/kandinsky-2-2-decoder</option>
+                                <option value="stabilityai/stable-diffusion-xl-refiner-1.0">stabilityai/stable-diffusion-xl-refiner-1.0</option>
+                            </select>
+                            </br>
+                            <textarea name="text_input" rows="2" cols="58" required></textarea>
+                            </br>
+                            <label for="seed_input">Seed:</label>
+                            <input type="number" name="seed_input" id="seed_input" value="598598540">
+                            <button type="button" onclick="generateRandomSeed()">Generate Random Seed</button>
+                            </br>
+
+                            <label for="strength_scale_input">Strength:</label>
+                            <input type="range" name="strength_scale_input" id="strength_scale_input" min="0.0" max="1.0" step="0.1" value="0.6">
+                            <output for="strength_scale_input">0.6</output>
+                            </br>
+
+                            <label for="guidance_scale_input">Guidance Scale:</label>
+                            <input type="range" name="guidance_scale_input" id="guidance_scale_input" min="0.0" max="20.0" step="0.1" value="3.0">
+                            <output for="guidance_scale_input">3.0</output>
+                            </br>
+
                             
                             <input type="checkbox" name="is_composition" id="isCompositionCheckbox">
                             <label for="isCompositionCheckbox">Is Composition</label>
@@ -30,7 +52,7 @@
             </div>
             
             <div class="col-sm-4">
-                <div class="card text-center" style="height: 24rem;">
+                <div class="card text-center" style="height: 30rem;">
                     <div class="card-body">
                         <h5 class="card-title">
                             <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
@@ -40,7 +62,7 @@
             </div>
             
             <div class="col-sm-4">
-                <div class="card" style="height: 24rem;">
+                <div class="card" style="height: 30rem;">
                     <div class="card-body text-center">
                         <h5 class="card-title">Result</h5>
                         <div id="changed_img" style="max-height: 100px"></div>
@@ -145,6 +167,36 @@ function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
     document.getElementById('myForm').addEventListener('submit', function (event) {
         event.preventDefault();
     });
+
+
+    function generateRandomSeed() {
+    var randomSeed = Math.floor(Math.random() * 1000000000) + 1;
+    document.getElementById("seed_input").value = randomSeed;
+}
+
+var guidanceSlider = document.getElementById("guidance_scale_input");
+var guidanceOutput = document.querySelector("output[for=guidance_scale_input]");
+
+var strengthSlider = document.getElementById("strength_scale_input");
+var strengthOutput = document.querySelector("output[for=strength_scale_input]");
+
+guidanceSlider.addEventListener("input", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
+
+guidanceSlider.addEventListener("change", function() {
+    guidanceOutput.textContent = guidanceSlider.value;
+});
+
+strengthSlider.addEventListener("input", function() {
+    strengthOutput.textContent = strengthSlider.value;
+});
+
+strengthSlider.addEventListener("change", function() {
+    strengthOutput.textContent = strengthSlider.value;
+});
+
+
 </script>
 
 {% endblock %}

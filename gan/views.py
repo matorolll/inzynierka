@@ -193,85 +193,73 @@ def iti_run(request):
         photo = check_image_model(photo_model, photo_id)
         is_composition = request.POST.get('is_composition')
 
-        strength = float(request.POST.get('prompt_strength'))
+        seed = int(request.POST.get('seed_input'))
+        guidance_scale = float(request.POST.get('guidance_scale_input'))
+        strength_scale = float(request.POST.get('strength_scale_input'))
         text_input = request.POST.get('text_input')
+        model = request.POST.get('model_input')
 
-        new_photo = iti_script(photo, strength, text_input, is_composition)
+        new_photo = iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, is_composition)
         
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
-def iti_script(photo, strength, text_input, IsComposition):
+def iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, IsComposition):
         import torch, cv2
-        from diffusers import AutoPipelineForImage2Image
         from diffusers.utils import load_image, make_image_grid
+        from diffusers import AutoPipelineForImage2Image
 
-        torch.manual_seed(23098428)
+        torch.manual_seed(seed)
 
         if torch.cuda.is_available(): #gpu usage
-            pipe = AutoPipelineForImage2Image.from_pretrained(
-                "runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16, variant="fp16", use_safetensors=None, safety_checker = None
-            ).to("cuda")
+            pipe = AutoPipelineForImage2Image.from_pretrained(model, torch_dtype=torch.float16, use_safetensors=None, safety_checker = None)
+            pipe.to('cuda')
             pipe.enable_model_cpu_offload()
             pipe.enable_xformers_memory_efficient_attention()
-        
+
         else: #cpu usage
-            pipe = AutoPipelineForImage2Image.from_pretrained(
-                "runwayml/stable-diffusion-v1-5", use_safetensors=None, safety_checker = None
-            ).to("cup")
-            pipe.enable_model_cpu_offload()
-            pipe.enable_xformers_memory_efficient_attention()
+            pipe = AutoPipelineForImage2Image.from_pretrained(model)
+            pipe.to('cpu')
+
 
         #loading image
         init_image = load_image(photo.image.path)
 
-
         #turning to np array
-        generated_image = pipe(text_input, init_image, strength, guidance_scale=16.0).images[0]
-        if IsComposition:
-            img1 = pipe(text_input, init_image, strength=0.2, guidance_scale=0.0).images[0]
-            img2 = pipe(text_input, init_image, strength=0.4, guidance_scale=0.0).images[0]
-            img3 = pipe(text_input, init_image, strength=0.6, guidance_scale=0.0).images[0]
-            img4 = pipe(text_input, init_image, strength=0.8, guidance_scale=0.0).images[0]
-            img5 = pipe(text_input, init_image, strength=1.0, guidance_scale=0.0).images[0]
-
-            img6 = pipe(text_input, init_image, strength=0.2, guidance_scale=5.0).images[0]
-            img7 = pipe(text_input, init_image, strength=0.4, guidance_scale=5.0).images[0]
-            img8 = pipe(text_input, init_image, strength=0.6, guidance_scale=5.0).images[0]
-            img9 = pipe(text_input, init_image, strength=0.8, guidance_scale=5.0).images[0]
-            img10 = pipe(text_input, init_image, strength=1.0, guidance_scale=5.0).images[0]
-
-            img11 = pipe(text_input, init_image, strength=0.2, guidance_scale=10.0).images[0]
-            img12 = pipe(text_input, init_image, strength=0.4, guidance_scale=10.0).images[0]
-            img13 = pipe(text_input, init_image, strength=0.6, guidance_scale=10.0).images[0]
-            img14 = pipe(text_input, init_image, strength=0.8, guidance_scale=10.0).images[0]
-            img15 = pipe(text_input, init_image, strength=1.0, guidance_scale=10.0).images[0]
-
-            img16 = pipe(text_input, init_image, strength=0.2, guidance_scale=15.0).images[0]
-            img17 = pipe(text_input, init_image, strength=0.4, guidance_scale=15.0).images[0]
-            img18 = pipe(text_input, init_image, strength=0.6, guidance_scale=15.0).images[0]
-            img19 = pipe(text_input, init_image, strength=0.8, guidance_scale=15.0).images[0]
-            img20 = pipe(text_input, init_image, strength=1.0, guidance_scale=15.0).images[0]
-
-            img21 = pipe(text_input, init_image, strength=0.2, guidance_scale=20.0).images[0]
-            img22 = pipe(text_input, init_image, strength=0.4, guidance_scale=20.0).images[0]
-            img23 = pipe(text_input, init_image, strength=0.6, guidance_scale=20.0).images[0]
-            img24 = pipe(text_input, init_image, strength=0.8, guidance_scale=20.0).images[0]
-            img25 = pipe(text_input, init_image, strength=1.0, guidance_scale=20.0).images[0]
-
-            grid = make_image_grid(
-                [
-                img1, img2, img3, img4, img5,
-                img6, img7, img8, img9, img10,
-                img11, img12, img13, img14, img15,
-                img16, img17, img18, img19, img20,
-                img21, img22, img23, img24, img25,                                   
-                ], rows=5, cols=5)
-            image = numpy.array(grid)
-        
-        else:
+        if not IsComposition:
+            generated_image = pipe(
+                                    prompt = text_input,
+                                    image = init_image,
+                                    strength = strength_scale,
+                                    guidance_scale=guidance_scale,
+                                  ).images[0]
+            
             image = numpy.array(generated_image)
+        else:
+            rows = cols = 5
+            strength_range = (0.2, 1.0)
+            guidance_scale_range = (0.0, 20.0)
 
+            strength_tab = []
+            guidance_tab = []
+
+            images = []
+            for row in range(rows):
+                for col in range(cols):
+                    strength = round(strength_range[0] + col * ((strength_range[1] - strength_range[0]) / (cols - 1)), 2)
+                    guidance_scale = round(guidance_scale_range[0] + row * ((guidance_scale_range[1] - guidance_scale_range[0]) / (rows - 1)), 2)
+
+                    img = pipe(text_input, init_image, strength=strength, guidance_scale=guidance_scale).images[0]
+                    images.append(img)
+
+                    strength_tab.append(strength)
+                    guidance_tab.append(guidance_scale)
+
+            grid = make_image_grid(images, rows=rows, cols=cols)
+            image = numpy.array(grid)
+
+            strength_scale = strength_tab
+            guidance_scale = guidance_tab
 
         #fixing colors
         if len(image.shape) == 2: _, image_bytes = cv2.imencode('.png', image)
@@ -285,8 +273,7 @@ def iti_script(photo, strength, text_input, IsComposition):
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
 
-
-        new_photo = imagetoimagePhoto(prompt=text_input, image=image_file)
+        new_photo = imagetoimagePhoto(prompt=text_input, image=image_file, model_used=model, strength=strength_scale , guidance=guidance_scale)
         new_photo.save()
         return new_photo
 
@@ -408,4 +395,3 @@ def check_image_model(photo_model, photo_id):
 
 def check_if_file_over_100kb(file_path):
     return os.path.getsize(file_path) / 1024 > 100
-

@@ -54,6 +54,10 @@ class imagetoimagePhoto(models.Model):
     title = models.CharField(max_length=255)
     prompt = models.CharField(max_length=255)
     image = models.ImageField(upload_to='gan_photos/imagetoimage/')
+    model_used = models.CharField(max_length=255,  blank=True, null=True)
+    strength = models.CharField(max_length=255, blank=True, null=True)
+    guidance = models.CharField(max_length=255, blank=True, null=True) 
+                                  
 
     def __str__(self):
         return self.title
