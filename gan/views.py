@@ -309,30 +309,33 @@ def inpaint_run(request):
         text_input = request.POST.get('text_input')
         seed = int(request.POST.get('seed_input'))
         guidance_scale = float(request.POST.get('guidance_scale_input'))
-        model = request.POST.get('model_input')
+        strength_scale = float(request.POST.get('strength_scale_input'))
 
+        model = request.POST.get('model_input')
+        mask_data_url = request.POST.get('maskUrl')
+        is_composition = request.POST.get('is_composition')
 
         photo_id = request.POST.get('photo_id')
         photo_model = request.POST.get('photo_model')
         photo = check_image_model(photo_model, photo_id)
 
 
-        mask_data_url = request.POST.get('maskUrl')
-        _, encoded_data = mask_data_url.split(',', 1)
-        image_data = base64.b64decode(encoded_data)
-        image_io = io.BytesIO(image_data)
-        mask_image = Image.open(image_io)
-
-
-        new_photo = inpaint_script(photo,mask_image,text_input,seed, guidance_scale, model)
+        new_photo = inpaint_script(photo,mask_data_url,text_input,seed, guidance_scale, strength_scale, model, is_composition)
 
         return JsonResponse({'changed_image_url': new_photo.image.url})
     return HttpResponseBadRequest('Invalid request')
 
-def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
+def inpaint_script(photo,mask_data_url,text_input,seed, guidance_scale, strength_scale, model, IsComposition):
         import torch, cv2
-        from diffusers.utils import load_image
+        from diffusers.utils import load_image, make_image_grid
         from diffusers import AutoPipelineForInpainting
+
+        #process mask
+        _, encoded_data = mask_data_url.split(',', 1)
+        image_data = base64.b64decode(encoded_data)
+        image_io = io.BytesIO(image_data)
+        masked_image = Image.open(image_io)
+
         
         torch.manual_seed(seed)
 
@@ -356,11 +359,57 @@ def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
 
 
         #loading image and mask
-        init_image = load_image(photo.image.path)
+        try:
+            init_image = load_image(photo.thumbnail_medium.path)
+        except AttributeError:
+            init_image = load_image(photo.image.path)
+
         mask_image = load_image(masked_image)
 
+
+
+
+                #turning to np array
+        if not IsComposition:
+            generated_image = pipe(
+                                    prompt = text_input,
+                                    image = init_image,
+                                    mask_image=mask_image,
+                                    guidance_scale=guidance_scale,
+                                    strength=strength_scale
+                                  ).images[0]
+            
+            image = numpy.array(generated_image)
+        else:
+            pass
+            rows = cols = 5
+            strength_range = (0.2, 1.0)
+            guidance_scale_range = (0.0, 20.0)
+
+            strength_tab = []
+            guidance_tab = []
+
+            images = []
+            for row in range(rows):
+                for col in range(cols):
+                    strength = round(strength_range[0] + col * ((strength_range[1] - strength_range[0]) / (cols - 1)), 2)
+                    guidance_scale = round(guidance_scale_range[0] + row * ((guidance_scale_range[1] - guidance_scale_range[0]) / (rows - 1)), 2)
+
+                    img = pipe(prompt=text_input, mask_image=mask_image, image=init_image, guidance_scale=guidance_scale, strength=strength).images[0]
+                    images.append(img)
+
+                    strength_tab.append(strength)
+                    guidance_tab.append(guidance_scale)
+
+            grid = make_image_grid(images, rows=rows, cols=cols)
+            image = numpy.array(grid)
+
+            strength_scale = strength_tab
+            guidance_scale = guidance_tab
+
+
         #fix steps
-        image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance_scale=guidance_scale).images[0])
+        #image = numpy.array(pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance_scale=guidance_scale).images[0])
 
 
         #fixing colors
@@ -374,7 +423,7 @@ def inpaint_script(photo,masked_image,text_input,seed, guidance_scale, model):
 
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
-        new_photo = inpaintPhoto(prompt=text_input, image=image_file)
+        new_photo = inpaintPhoto(prompt=text_input, image=image_file, model_used=model,guidance=guidance_scale, strength=strength)
         new_photo.save()
         return new_photo
 
