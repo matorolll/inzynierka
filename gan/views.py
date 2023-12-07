@@ -381,7 +381,7 @@ def inpaint_script(photo,mask_data_url,text_input,seed, guidance_scale, strength
             
             image = numpy.array(generated_image)
         else:
-            pass
+            #not working with xl
             rows = cols = 5
             strength_range = (0.2, 1.0)
             guidance_scale_range = (0.0, 20.0)
@@ -395,7 +395,7 @@ def inpaint_script(photo,mask_data_url,text_input,seed, guidance_scale, strength
                     strength = round(strength_range[0] + col * ((strength_range[1] - strength_range[0]) / (cols - 1)), 2)
                     guidance_scale = round(guidance_scale_range[0] + row * ((guidance_scale_range[1] - guidance_scale_range[0]) / (rows - 1)), 2)
 
-                    img = pipe(prompt=text_input, mask_image=mask_image, image=init_image, guidance_scale=guidance_scale, strength=strength).images[0]
+                    img = pipe(prompt=text_input, image=init_image, mask_image=mask_image, guidance=guidance_scale, strength=strength).images[0]
                     images.append(img)
 
                     strength_tab.append(strength)
@@ -423,7 +423,7 @@ def inpaint_script(photo,mask_data_url,text_input,seed, guidance_scale, strength
 
         #saving
         image_file = InMemoryUploadedFile(io.BytesIO(image_bytes), None, title, 'image/png', len(image_bytes), None)
-        new_photo = inpaintPhoto(prompt=text_input, image=image_file, model_used=model,guidance=guidance_scale, strength=strength)
+        new_photo = inpaintPhoto(prompt=text_input, image=image_file, model_used=model,guidance=guidance_scale, strength=strength_scale)
         new_photo.save()
         return new_photo
 
