@@ -223,7 +223,11 @@ def iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, I
 
 
         #loading image
-        init_image = load_image(photo.image.path)
+        
+        try:
+            init_image = load_image(photo.thumbnail_medium.path)
+        except AttributeError:
+            init_image = load_image(photo.image.path)
 
         #turning to np array
         if not IsComposition:
@@ -249,7 +253,7 @@ def iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, I
                     strength = round(strength_range[0] + col * ((strength_range[1] - strength_range[0]) / (cols - 1)), 2)
                     guidance_scale = round(guidance_scale_range[0] + row * ((guidance_scale_range[1] - guidance_scale_range[0]) / (rows - 1)), 2)
 
-                    img = pipe(text_input, init_image, strength=strength, guidance_scale=guidance_scale).images[0]
+                    img = pipe(prompt=text_input, image=init_image, strength=strength, guidance_scale=guidance_scale).images[0]
                     images.append(img)
 
                     strength_tab.append(strength)
