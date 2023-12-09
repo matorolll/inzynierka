@@ -4,7 +4,6 @@
 {% endblock %}
 
 
-
 {% block content %}
 
     <div>ESRGAN</div> 
@@ -25,7 +24,7 @@
                         <h5 class="card-title">
                             <form id="myForm" method="post" action="{% url 'esrgan_run' %}">
                                 {% csrf_token %}
-                                <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
+                                <button type="button" class="btn btn-outline-secondary btn-block">Run script</button>
                             </form>
                         </h5>
                     </div>
@@ -48,7 +47,7 @@
         {% for session in sessions %}
         {% for photo in session.photo_set.all %}
             <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
-                data-photo-id="{{ photo.id }}" data-photo-model="Photo" onclick="moveImageToEdit(this, 'image_from_base', 'image_to_edit')">
+                data-photo-id="{{ photo.id }}" data-photo-model="Photo">
         {% endfor %}
     {% endfor %}
     </div>
@@ -57,7 +56,7 @@
         <h2>TextToImage Image from base:</h2>
         {% for ttiPhoto in ttiPhotos %}
             <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'image_to_edit')">
+            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto">
         {% endfor %}
     </div>
 
@@ -65,7 +64,7 @@
         <h2>ImageToImage Image from base:</h2>
         {% for itiPhoto in itiPhotos %}
             <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'image_to_edit')">
+            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto">
         {% endfor %}
     </div>
 
@@ -81,7 +80,6 @@
         {% csrf_token %}
         <button type="submit">Delete all esrgan photos from database</button>
       </form>
-
 
 <script>
 function checkAndSubmit() {
@@ -117,8 +115,28 @@ function checkAndSubmit() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+        // Attach onclick event to the "Run script" button
+        var runScriptButton = document.querySelector('.btn.btn-outline-secondary.btn-block');
+        runScriptButton.onclick = function () {
+            checkAndSubmit();
+        };
 
+        // Attach onclick event to the images for moving to the edit area
+        function attachClickEventToImages(containerId, targetContainerId) {
+            var images = document.querySelectorAll('#' + containerId + ' img');
+            images.forEach(function (imgElement) {
+                imgElement.onclick = function () {
+                    moveImageToEdit(this, containerId, targetContainerId);
+                };
+            });
+        }
 
+        // Attach onclick events to images in different containers
+        attachClickEventToImages('image_from_base', 'image_to_edit');
+        attachClickEventToImages('tti_image_from_base', 'image_to_edit');
+        attachClickEventToImages('iti_image_from_base', 'image_to_edit');
+    });
 
 function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
     var sourceContainer = document.getElementById(sourceContainerId);
@@ -147,6 +165,13 @@ function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
     document.getElementById('myForm').addEventListener('submit', function (event) {
         event.preventDefault();
     });
+
+
+
+
+
 </script>
+
+
 
 {% endblock %}
