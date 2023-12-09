@@ -9,7 +9,6 @@
 {% endblock %}
 
 {% block content %}
-
     <div>ESRGAN</div> 
     <div class="m-3">
         <div class="row">
@@ -81,10 +80,6 @@
     <form action="{% url 'esrgan_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all esrgan photos from database</button>
-      </form>
-
-
-
-
+    </form>
 
 {% endblock %}

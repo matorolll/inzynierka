@@ -7,13 +7,6 @@
 
 {% block content %}
 {% if user.is_superuser %}
-<style>
-    .card{
-        margin-top:20px;
-        margin-bottom:20px;
-    }
-</style>
-
     <div class="row px-5 pt-2 text-center">
         <div class="col-sm-4">
           <div class="card">
@@ -74,7 +67,7 @@
             </div>
           </div>
         </div>
-
-    </div>
+    </div>   
+    <style> .card{ margin-top:20px; margin-bottom:20px;  }</style>
 {% endif %}
 {% endblock %}
