@@ -5,6 +5,7 @@ Portfolio
 
 {% block statics %}    
     {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles/portfolio.css' %}">
     <script type="text/javascript" src="{% static 'scripts/portfolio.js' %}" defer></script>
 {% endblock %}
 
@@ -124,33 +125,6 @@ Portfolio
         </div>
       </div>
 </div>
-
-<style>
-    #image-track-container {
-      margin: 0rem;
-      overflow: hidden;
-    }
-    
-    #image-track {
-      display: flex;
-      gap: 5vmin;
-      position: relative;
-      left: 6%;
-      user-select: none; /* -- Prevent image highlighting -- */
-      margin-bottom:20px;
-    }
-    
-    #image-track > .image {
-      width: 30vmin;
-      height: 46vmin;
-      object-fit: cover;
-      object-position: 100% center;
-    }
-    
-    
-    
-</style>
-
 
 <div id="Layer5_Slideshow">
     <div id="image-track-container">

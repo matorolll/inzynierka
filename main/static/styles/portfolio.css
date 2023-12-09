@@ -1,0 +1,20 @@
+#image-track-container {
+    margin: 0rem;
+    overflow: hidden;
+  }
+  
+  #image-track {
+    display: flex;
+    gap: 5vmin;
+    position: relative;
+    left: 6%;
+    user-select: none; /* -- Prevent image highlighting -- */
+    margin-bottom:20px;
+  }
+  
+  #image-track > .image {
+    width: 30vmin;
+    height: 46vmin;
+    object-fit: cover;
+    object-position: 100% center;
+  }
