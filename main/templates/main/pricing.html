@@ -6,6 +6,8 @@ Pricing
 {% block statics %}    
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'pricing.css' %}">
+    <script type="text/javascript" src="{% static 'scriptz.js' %}"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -40,7 +42,7 @@ Pricing
                             <span class="float-left"> <i class="bi bi-check2-circle"></i> Editing</span>
                             <span class="float-right">Inprice</span>
                         </div>
-                        <a href="#" class="btn btn-secondary mt-5">Schedule</a>
+                        <a href="#" class="btn btn-secondary mt-5" onclick="hello()">Schedule</a>
                     </div>
                 </div>
             </div>

@@ -3,6 +3,10 @@
     ESRGAN
 {% endblock %}
 
+{% block statics %}    
+    {% load static %}
+    <script type="text/javascript" src="{% static 'esrgan.js' %}" defer></script>
+{% endblock %}
 
 {% block content %}
 
@@ -47,7 +51,7 @@
         {% for session in sessions %}
         {% for photo in session.photo_set.all %}
             <img src="{{ photo.image.url }}" alt="connect" style="max-height: 100px"
-                data-photo-id="{{ photo.id }}" data-photo-model="Photo">
+                data-photo-id="{{ photo.id }}" data-photo-model="Photo" onclick="moveImageToEdit(this, 'image_from_base', 'image_to_edit')">
         {% endfor %}
     {% endfor %}
     </div>
@@ -56,7 +60,7 @@
         <h2>TextToImage Image from base:</h2>
         {% for ttiPhoto in ttiPhotos %}
             <img src="{{ ttiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto">
+            data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
 
@@ -64,7 +68,7 @@
         <h2>ImageToImage Image from base:</h2>
         {% for itiPhoto in itiPhotos %}
             <img src="{{ itiPhoto.image.url }}" alt="connect" style="max-height: 100px"
-            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto">
+            data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
 
@@ -74,103 +78,12 @@
             <img src="{{ esrganPhoto.image.url }}" alt="connect" style="max-height: 100px">
         {% endfor %}
     </div>
-
-
     <form action="{% url 'esrgan_delete_all_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all esrgan photos from database</button>
       </form>
 
-<script>
-function checkAndSubmit() {
-    var imageToEdit = document.getElementById('image_to_edit');
-    if (imageToEdit.children.length > 0) {
-        var selectedImage = imageToEdit.children[0];
-        var photoId = selectedImage.getAttribute('data-photo-id');
 
-        var formData = new FormData(document.getElementById('myForm'));
-        var photoModel = selectedImage.getAttribute('data-photo-model');
-
-        formData.append('photo_id', photoId);
-        formData.append('photo_model', photoModel);
-
-        fetch(document.getElementById('myForm').action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image" style="max-height: 200px">';
-            var ganImage = document.createElement('img');
-            ganImage.src = data.changed_image_url;
-            ganImage.alt = 'changed image';
-            ganImage.style = 'max-height: 100px';
-            document.getElementById('gan_image_from_base').appendChild(ganImage);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    } else {
-        alert('Add image before running the script.');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-        // Attach onclick event to the "Run script" button
-        var runScriptButton = document.querySelector('.btn.btn-outline-secondary.btn-block');
-        runScriptButton.onclick = function () {
-            checkAndSubmit();
-        };
-
-        // Attach onclick event to the images for moving to the edit area
-        function attachClickEventToImages(containerId, targetContainerId) {
-            var images = document.querySelectorAll('#' + containerId + ' img');
-            images.forEach(function (imgElement) {
-                imgElement.onclick = function () {
-                    moveImageToEdit(this, containerId, targetContainerId);
-                };
-            });
-        }
-
-        // Attach onclick events to images in different containers
-        attachClickEventToImages('image_from_base', 'image_to_edit');
-        attachClickEventToImages('tti_image_from_base', 'image_to_edit');
-        attachClickEventToImages('iti_image_from_base', 'image_to_edit');
-    });
-
-function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
-    var sourceContainer = document.getElementById(sourceContainerId);
-    var targetContainer = document.getElementById(targetContainerId);
-    var changedImgContainer = document.getElementById('changed_img');
-
-    if (targetContainer.children.length > 0) return;
-
-    sourceContainer.removeChild(imgElement);
-    imgElement.style.maxHeight = '200px';
-
-    imgElement.onclick = function() {
-        changedImgContainer.innerHTML = '';
-        sourceContainer.appendChild(imgElement);
-        imgElement.style.maxHeight = '100px';
-        imgElement.onclick = function() {
-            moveImageToEdit(this, sourceContainerId, targetContainerId);
-        };
-    };
-
-    targetContainer.appendChild(imgElement);
-}
-
-
-
-    document.getElementById('myForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-    });
-
-
-
-
-
-</script>
 
 
 
