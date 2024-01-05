@@ -27,9 +27,8 @@
 
 <div id="selectedCounter">Selected: </div>
 <button id="clearButton">Clear images</button>
-</br>
-<a href="{% url 'download_photos_zip' name=session.name %}">Download all photos to zip</a>
-<a href="{% url 'download_photos_folder' name=session.name%}">Download all photos to folder</a>
+<button id="downloadToZip"><a href="{% url 'download_photos_zip' name=session.name %}">Download all photos to zip</a></button>
+<button id="downloadToFolder"><a href="{% url 'download_photos_folder' name=session.name%}">Download all photos to folder</a></button>
 
 <section class="gallery min-vh-100">
     <div class="container-lg">
@@ -41,7 +40,7 @@
                      data-gallery="photo_gallery" data-photo-id="{{ photo.id }}" class="photo-container"> 
                      <!--data-alt="{{ photo.id }}"-->
                     
-                    <img src="{{photo.thumbnail_medium.url}}" class=" shadow-1-strong rounded" loading="lazy"
+                    <img src="{{photo.image.url}}" class=" shadow-1-strong rounded" loading="lazy"
                     alt="{{ photo.id }}" data-selected="{{ photo.selected_to_edit }}"/>
                     <i class="fas fa-heart like-icon" data-photo-id="{{ photo.id }}"></i>
 

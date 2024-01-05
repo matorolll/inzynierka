@@ -2,12 +2,6 @@
 {% block title %}
     ESRGAN
 {% endblock %}
-
-{% block statics %}    
-    {% load static %}
-    <script type="text/javascript" src="{% static 'esrgan.js' %}" defer></script>
-{% endblock %}
-
 {% block content %}
     <div>ESRGAN</div> 
     <div class="m-3">
@@ -27,7 +21,7 @@
                         <h5 class="card-title">
                             <form id="myForm" method="post" action="{% url 'esrgan_run' %}">
                                 {% csrf_token %}
-                                <button type="button" class="btn btn-outline-secondary btn-block">Run script</button>
+                                <button type="button" class="btn btn-outline-secondary btn-block" onclick="checkAndSubmit()">Run script</button>
                             </form>
                         </h5>
                     </div>
@@ -44,7 +38,6 @@
             </div>
         </div>
     </div>
-
     <div class="m-3" id="image_from_base">
         <h2>Image from base:</h2>
         {% for session in sessions %}
@@ -54,7 +47,6 @@
         {% endfor %}
     {% endfor %}
     </div>
- 
     <div class="m-3" id="tti_image_from_base">
         <h2>TextToImage Image from base:</h2>
         {% for ttiPhoto in ttiPhotos %}
@@ -62,7 +54,6 @@
             data-photo-id="{{ ttiPhoto.id }}" data-photo-model="texttoimagePhoto" onclick="moveImageToEdit(this, 'tti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
-
     <div class="m-3" id="iti_image_from_base">
         <h2>ImageToImage Image from base:</h2>
         {% for itiPhoto in itiPhotos %}
@@ -70,16 +61,85 @@
             data-photo-id="{{ itiPhoto.id }}" data-photo-model="imagetoimagePhoto" onclick="moveImageToEdit(this, 'iti_image_from_base', 'image_to_edit')">
         {% endfor %}
     </div>
-
     <div class="m-3" id="gan_image_from_base">
         <h2>GAN Image from base:</h2>
         {% for esrganPhoto in esrganPhotos %}
             <img src="{{ esrganPhoto.image.url }}" alt="connect" style="max-height: 100px">
         {% endfor %}
     </div>
-    <form action="{% url 'esrgan_delete_all_photos' %}" method="post">
+    <form action="{% url 'delete_all_esrgan_photos' %}" method="post">
         {% csrf_token %}
         <button type="submit">Delete all esrgan photos from database</button>
     </form>
 
-{% endblock %}
+
+
+    <script>
+        function checkAndSubmit() {
+            var imageToEdit = document.getElementById('image_to_edit');
+            if (imageToEdit.children.length > 0) {
+                var selectedImage = imageToEdit.children[0];
+                var photoId = selectedImage.getAttribute('data-photo-id');
+        
+                var formData = new FormData(document.getElementById('myForm'));
+                var photoModel = selectedImage.getAttribute('data-photo-model');
+        
+                formData.append('photo_id', photoId);
+                formData.append('photo_model', photoModel);
+        
+                fetch(document.getElementById('myForm').action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('changed_img').innerHTML = '<img src="' + data.changed_image_url + '" alt="changed image" style="max-height: 200px">';
+                    var ganImage = document.createElement('img');
+                    ganImage.src = data.changed_image_url;
+                    ganImage.alt = 'changed image';
+                    ganImage.style = 'max-height: 100px';
+                    document.getElementById('gan_image_from_base').appendChild(ganImage);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            } else {
+                alert('Add image before running the script.');
+            }
+        }
+        
+        
+        
+        function moveImageToEdit(imgElement, sourceContainerId, targetContainerId) {
+            var sourceContainer = document.getElementById(sourceContainerId);
+            var targetContainer = document.getElementById(targetContainerId);
+            var changedImgContainer = document.getElementById('changed_img');
+        
+            if (targetContainer.children.length > 0) return;
+        
+            sourceContainer.removeChild(imgElement);
+            imgElement.style.maxHeight = '200px';
+        
+            imgElement.onclick = function() {
+                changedImgContainer.innerHTML = '';
+                sourceContainer.appendChild(imgElement);
+                imgElement.style.maxHeight = '100px';
+                imgElement.onclick = function() {
+                    moveImageToEdit(this, sourceContainerId, targetContainerId);
+                };
+            };
+        
+            targetContainer.appendChild(imgElement);
+        }
+        
+        
+        
+            document.getElementById('myForm').addEventListener('submit', function (event) {
+        
+                
+            
+          
+                event.preventDefault();
+            });
+        </script>
+        {% endblock %}

@@ -44,7 +44,8 @@ def esrgan_run(request):
 
         photo = check_image_model(photo_model, photo_id)
         if photo_model == 'Photo' and check_if_file_over_100kb(photo.image.path):
-            esrgan_photo = esrgan_script(photo.thumbnail_medium.path)
+            esrgan_photo = esrgan_script(photo.image.path)
+            #esrgan_photo = esrgan_script(photo.thumbnail_medium.path)
         else: esrgan_photo = esrgan_script(photo.image.path)
 
         return JsonResponse({'changed_image_url': esrgan_photo.image.url})
