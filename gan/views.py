@@ -242,11 +242,13 @@ def iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, I
             image = numpy.array(generated_image)
         else:
             rows = cols = 5
-            strength_range = (0.2, 1.0)
+            strength_range = (0.0, 1.0)
             guidance_scale_range = (0.0, 20.0)
 
             strength_tab = []
             guidance_tab = []
+            print(strength_tab)
+            print(guidance_tab)
 
             images = []
             for row in range(rows):
@@ -265,6 +267,14 @@ def iti_script(photo, seed, guidance_scale, strength_scale, text_input, model, I
 
             strength_scale = strength_tab
             guidance_scale = guidance_tab
+            print("strenght")
+            print(strength_scale)
+            print(strength_tab)
+
+            print("guidance")
+            print(guidance_scale)
+            print(guidance_tab)
+
 
         #fixing colors
         if len(image.shape) == 2: _, image_bytes = cv2.imencode('.png', image)
